@@ -21,6 +21,6 @@ Route::middleware('auth:sanctum')->get('/me', function (Request $request) {
     ]);
 });
 
-Route::middleware('auth:sanctum')->post('/reservation', [ReservationController::class, 'store']);
+Route::middleware('auth:sanctum')->post('/reservations/store', [ReservationController::class, 'store']);
 Route::middleware('auth:sanctum')->get('/reservations', [ReservationController::class, 'index']);
 
