@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
+use Illuminate\Support\Str;
 
 class Reservation extends Model
 {
@@ -12,13 +13,24 @@ class Reservation extends Model
 
     protected $fillable = [
         'user_id',
+        'facility_id',
         'facility',
         'date',
         'start_time',
         'end_time',
         'fee',
         'status',
+        'reservation_token',
+        'digital_signature',
+        'payment_id',
     ];
+
+    protected static function booted()
+    {
+        static::creating(function ($reservation) {
+            $reservation->reservation_token = Str::uuid(); // Generate unique token
+        });
+    }
 
     /**
      * Define the relationship to the user who made the reservation
@@ -26,6 +38,11 @@ class Reservation extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function facility()
+    {
+        return $this->belongsTo(Facility::class);
     }
 
     /**

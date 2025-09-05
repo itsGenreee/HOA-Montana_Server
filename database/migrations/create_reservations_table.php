@@ -14,25 +14,26 @@ return new class extends Migration
         Schema::create('reservations', function (Blueprint $table) {
             $table->id();
 
-            // User who made the reservation
-            $table->foreignId('user_id')
-                  ->constrained()
-                  ->onDelete('cascade');
+            // Link to user and facility
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('facility_id')->constrained()->onDelete('cascade');
 
-            // Facility name (hardcoded list in app, just store value here)
-            $table->string('facility');
 
             // Reservation datetime range
-            $table->date('date');  // Store the date of reservation
+            $table->date('date');
             $table->time('start_time');
             $table->time('end_time');
 
-            // Optional fee column (nullable for now)
+            // Pricing
             $table->decimal('fee', 8, 2)->nullable();
 
-            // Status (pending, confirmed, canceled)
-            $table->enum('status', ['pending', 'confirmed', 'canceled'])
-                  ->default('pending');
+            // Status
+            $table->enum('status', ['pending', 'confirmed', 'canceled'])->default('pending');
+
+            // Security & Payment
+            $table->uuid('reservation_token')->unique();
+            $table->text('digital_signature')->nullable();
+            $table->string('payment_id')->nullable();
 
             $table->timestamps();
         });

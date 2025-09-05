@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Reservation;
+use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use App\Helpers\DigitalSignature;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
@@ -26,31 +28,65 @@ class ReservationController extends Controller
     /**
      * Create a new reservation
      */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'facility' => 'required|string',
-            'date' => 'required|date',
-            'start_time' => 'required|date_format:H:i',  // matches SQL TIME format
-            'end_time' => 'required|date_format:H:i|after:start_time',
-            'fee' => 'nullable|numeric',
-        ]);
+public function store(Request $request)
+{
+    // Validate incoming request
+    $validated = $request->validate([
+        'facility_id' => 'required|exists:facilities,id',
+        'facility'    => 'required|string',
+        'date'        => 'required|date',
+        'start_time'  => 'required|date_format:H:i',
+        'end_time'    => 'required|date_format:H:i',
+        'fee'         => 'nullable|numeric',
+    ]);
 
-        // Bind user_id automatically from the authenticated user
+    try {
+        // Create reservation
         $reservation = Reservation::create([
-            'user_id' => Auth::id(),
-            'facility' => $request->facility,
-            'date' => $request->date,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
-            'fee' => $request->fee,
-            'status' => 'pending', // default status
+            'user_id'           => Auth::id(),
+            'facility_id'       => $validated['facility_id'],
+            'facility'          => $validated['facility'],
+            'date'              => $validated['date'],
+            'start_time'        => $validated['start_time'],
+            'end_time'          => $validated['end_time'],
+            'fee'               => $validated['fee'] ?? 100,
+            'status'            => 'pending',
+            'reservation_token' => Str::uuid(),
+            'digital_signature' => null,
+            'payment_id'        => null,
         ]);
 
         return response()->json([
             'message' => 'Reservation created successfully',
-            'reservation' => $reservation,
+            'reservation' => $reservation
         ], 201);
+
+    } catch (\Exception $e) {
+        // Catch any errors (like DB issues or mass assignment)
+        return response()->json([
+            'message' => 'Failed to create reservation',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+}
+
+
+    /**
+     * Verify reservation signature
+     */
+    public function verify($id)
+    {
+        $reservation = Reservation::findOrFail($id);
+
+        $isValid = DigitalSignature::verify(
+            $reservation->reservation_token,
+            $reservation->digital_signature
+        );
+
+        return response()->json([
+            'valid' => $isValid,
+            'reservation' => $reservation
+        ]);
     }
 
     /**
