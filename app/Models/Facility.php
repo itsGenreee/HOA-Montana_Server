@@ -11,7 +11,6 @@ class Facility extends Model
 
     protected $fillable = [
         'name',
-        'type',           // Only 'hourly' for now
         'start_time',
         'end_time',
         'interval_minutes',
@@ -20,5 +19,10 @@ class Facility extends Model
     public function reservations()
     {
         return $this->hasMany(Reservation::class);
+    }
+
+    public function fees()
+    {
+        return $this->hasMany(FacilityFee::class);
     }
 }

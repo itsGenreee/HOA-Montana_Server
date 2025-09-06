@@ -33,7 +33,6 @@ public function store(Request $request)
     // Validate incoming request
     $validated = $request->validate([
         'facility_id' => 'required|exists:facilities,id',
-        'facility'    => 'required|string',
         'date'        => 'required|date',
         'start_time'  => 'required|date_format:H:i',
         'end_time'    => 'required|date_format:H:i',
@@ -41,28 +40,33 @@ public function store(Request $request)
     ]);
 
     try {
+        // Generate reservation token
+        $reservationToken = Str::uuid()->toString();
+
+        // Sign the reservation token
+        $digitalSignature = DigitalSignature::sign($reservationToken);
+
         // Create reservation
         $reservation = Reservation::create([
             'user_id'           => Auth::id(),
             'facility_id'       => $validated['facility_id'],
-            'facility'          => $validated['facility'],
             'date'              => $validated['date'],
             'start_time'        => $validated['start_time'],
             'end_time'          => $validated['end_time'],
             'fee'               => $validated['fee'] ?? 100,
             'status'            => 'pending',
-            'reservation_token' => Str::uuid(),
-            'digital_signature' => null,
+            'reservation_token' => $reservationToken,
+            'digital_signature' => $digitalSignature, // Store the signature
             'payment_id'        => null,
         ]);
 
         return response()->json([
-            'message' => 'Reservation created successfully',
+            'message' => 'Reservation created and signed successfully',
             'reservation' => $reservation
         ], 201);
 
     } catch (\Exception $e) {
-        // Catch any errors (like DB issues or mass assignment)
+        // Catch any errors (like DB issues, key errors, or mass assignment)
         return response()->json([
             'message' => 'Failed to create reservation',
             'error' => $e->getMessage(),
