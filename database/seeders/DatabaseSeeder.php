@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         FacilitiesSeeder::class,
         FacilityFeesSeeder::class,
         UserSeeder::class,
+        AmenitiesSeeder::class,
         ReservationSeeder::class,
     ]);
     }

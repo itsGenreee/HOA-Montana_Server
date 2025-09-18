@@ -14,12 +14,14 @@ class Reservation extends Model
     protected $fillable = [
         'user_id',
         'facility_id',
-        'facility',
         'date',
         'start_time',
         'end_time',
-        'fee',
+        'facility_fee',      // replaced old fee
+        'total_fee',         // includes facility + amenities
         'status',
+        'event_type',        // e.g. Birthday, Wedding
+        'guest_count',       // number of guests
         'reservation_token',
         'digital_signature',
         'payment_id',
@@ -28,7 +30,9 @@ class Reservation extends Model
     protected static function booted()
     {
         static::creating(function ($reservation) {
-            $reservation->reservation_token = Str::uuid(); // Generate unique token
+            if (!$reservation->reservation_token) {
+                $reservation->reservation_token = Str::uuid(); // Generate unique token
+            }
         });
     }
 
@@ -45,13 +49,26 @@ class Reservation extends Model
         return $this->belongsTo(Facility::class);
     }
 
+    public function reservationAmenities()
+    {
+        return $this->hasMany(ReservationAmenity::class);
+    }
+
+    public function amenities()
+    {
+        return $this->belongsToMany(Amenity::class, 'reservation_amenities')
+                    ->withPivot('quantity', 'price')
+                    ->withTimestamps();
+    }
+
     /**
-     * Optional: Cast date and time fields
+     * Optional: Casts for date/time and money
      */
     protected $casts = [
-        'date' => 'date',             // will cast to Carbon instance
+        'date' => 'date',                   // Carbon
         'start_time' => 'datetime:H:i',
         'end_time' => 'datetime:H:i',
-        'fee' => 'decimal:2',
+        'facility_fee' => 'decimal:2',
+        'total_fee' => 'decimal:2',
     ];
 }

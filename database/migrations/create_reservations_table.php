@@ -25,10 +25,17 @@ return new class extends Migration
             $table->time('end_time');
 
             // Pricing
-            $table->decimal('fee', 8, 2)->nullable();
+            $table->decimal('facility_fee', 8, 2)->nullable();
+            $table->decimal('amenities_fee', 8, 2)->nullable();
+            $table->decimal('total_fee', 8, 2)->nullable();
+
 
             // Status
             $table->enum('status', ['pending', 'confirmed', 'canceled'])->default('pending');
+
+            //Reservation Info for Event Place
+            $table->string('event_type')->nullable();
+            $table->integer('guest_count')->nullable();
 
             // Security & Payment
             $table->uuid('reservation_token')->unique();
