@@ -84,17 +84,7 @@ public function store(Request $request)
         // Generate reservation token
         $reservationToken = Str::uuid()->toString();
 
-        // Sign the reservation token
-        $dataToSign = json_encode([
-            'user_id'     => Auth::id(),
-            'facility_id' => $validated['facility_id'],
-            'date'        => $validated['date'],
-            'start_time'  => $validated['start_time'],
-            'end_time'    => $validated['end_time'],
-            'reservation_token' => $reservationToken,
-        ], JSON_UNESCAPED_SLASHES);
-
-        $digitalSignature = DigitalSignature::sign($dataToSign);
+        $digitalSignature = DigitalSignature::sign($reservationToken);
 
         // Calculate fees separately
         $facility = Facility::find($validated['facility_id']);
@@ -180,7 +170,7 @@ public function store(Request $request)
     } catch (\Exception $e) {
         return response()->json([
             'message' => 'Failed to create reservation',
-            'error' => $e->getMessage(), 
+            'error' => $e->getMessage(),
         ], 500);
     }
 }
@@ -189,20 +179,7 @@ public function store(Request $request)
     /**
      * Verify reservation signature
      */
-    public function verify($id)
-    {
-        $reservation = Reservation::findOrFail($id);
 
-        $isValid = DigitalSignature::verify(
-            $reservation->reservation_token,
-            $reservation->digital_signature
-        );
-
-        return response()->json([
-            'valid' => $isValid,
-            'reservation' => $reservation
-        ]);
-    }
 
     /**
      * Show a single reservation

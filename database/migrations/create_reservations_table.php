@@ -31,7 +31,7 @@ return new class extends Migration
 
 
             // Status
-            $table->enum('status', ['pending', 'confirmed', 'canceled'])->default('pending');
+            $table->enum('status', ['pending', 'confirmed', 'canceled', 'checked-in'])->default('pending');
 
             //Reservation Info for Event Place
             $table->string('event_type')->nullable();

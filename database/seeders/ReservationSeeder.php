@@ -21,16 +21,8 @@ class ReservationSeeder extends Seeder
         if ($user && $tennisCourt) {
             // === Reservation #1 (Tennis Court) ===
             $reservationToken = Str::uuid()->toString();
-            $dataToSign = json_encode([
-                'user_id' => $user->id,
-                'facility_id' => $tennisCourt->id,
-                'date' => '2025-09-20',
-                'start_time' => '13:00',
-                'end_time' => '14:00',
-                'reservation_token' => $reservationToken,
-            ], JSON_UNESCAPED_SLASHES);
 
-            $digitalSignature = DigitalSignature::sign($dataToSign);
+            $digitalSignature = DigitalSignature::sign($reservationToken);
 
             $facilityFee = DB::table('facility_fees')
                 ->where('facility_id', $tennisCourt->id)
@@ -39,7 +31,7 @@ class ReservationSeeder extends Seeder
             Reservation::create([
                 'user_id' => $user->id,
                 'facility_id' => $tennisCourt->id,
-                'date' => '2025-09-20',
+                'date' => '2025-11-20',
                 'start_time' => '13:00',
                 'end_time' => '14:00',
                 'facility_fee' => $facilityFee,
@@ -56,16 +48,8 @@ class ReservationSeeder extends Seeder
         if ($user && $eventPlace) {
             // === Reservation #2 (Event Place) ===
             $reservationToken = Str::uuid()->toString();
-            $dataToSign = json_encode([
-                'user_id' => $user->id,
-                'facility_id' => $eventPlace->id,
-                'date' => '2025-10-05',
-                'start_time' => '08:00',
-                'end_time' => '13:00',
-                'reservation_token' => $reservationToken,
-            ], JSON_UNESCAPED_SLASHES);
 
-            $digitalSignature = DigitalSignature::sign($dataToSign);
+            $digitalSignature = DigitalSignature::sign($reservationToken);
 
             $facilityFee = DB::table('facility_fees')
                 ->where('facility_id', $eventPlace->id)
@@ -75,7 +59,7 @@ class ReservationSeeder extends Seeder
             $reservation = Reservation::create([
                 'user_id' => $user->id,
                 'facility_id' => $eventPlace->id,
-                'date' => '2025-10-05',
+                'date' => '2025-11-05',
                 'start_time' => '08:00',
                 'end_time' => '13:00',
                 'facility_fee' => $facilityFee,

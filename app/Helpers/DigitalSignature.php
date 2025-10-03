@@ -2,6 +2,9 @@
 
 namespace App\Helpers;
 
+use App\Models\Reservation;
+use Illuminate\Http\Request;
+
 class DigitalSignature
 {
     /**
@@ -14,12 +17,12 @@ class DigitalSignature
             throw new \Exception('Private key not found.');
         }
 
-        $pkey = openssl_pkey_get_private($privateKeyContent);
-        if ($pkey === false) {
+        $privkey = openssl_pkey_get_private($privateKeyContent);
+        if ($privkey === false) {
             throw new \Exception('Invalid private key.');
         }
 
-        openssl_sign($data, $signature, $pkey, OPENSSL_ALGO_SHA256);
+        openssl_sign($data, $signature, $privkey, OPENSSL_ALGO_SHA256);
 
         // No need to free key explicitly—PHP cleans up automatically
         return base64_encode($signature);
@@ -35,13 +38,14 @@ class DigitalSignature
             throw new \Exception('Public key not found.');
         }
 
-        $pkey = openssl_pkey_get_public($publicKeyContent);
-        if ($pkey === false) {
+        $pubkey = openssl_pkey_get_public($publicKeyContent);
+        if ($pubkey === false) {
             throw new \Exception('Invalid public key.');
         }
 
-        $result = openssl_verify($data, base64_decode($signature), $pkey, OPENSSL_ALGO_SHA256);
+        $result = openssl_verify($data, base64_decode($signature), $pubkey, OPENSSL_ALGO_SHA256);
 
         return $result === 1;
     }
+
 }
