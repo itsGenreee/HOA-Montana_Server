@@ -17,14 +17,22 @@ class Reservation extends Model
         'date',
         'start_time',
         'end_time',
-        'facility_fee',      // replaced old fee
-        'total_fee',         // includes facility + amenities
+        'facility_fee',
+        'total_fee',
         'status',
         'event_type',        // e.g. Birthday, Wedding
         'guest_count',       // number of guests
         'reservation_token',
         'digital_signature',
         'payment_id',
+        'checked_in_at',
+        'checked_in_by',
+        'payment_intent_id',
+        'payment_status',
+        'paid_at',
+        'payment_method',
+        'payment_error',
+        'payment_metadata'
     ];
 
     protected static function booted()
@@ -59,6 +67,11 @@ class Reservation extends Model
         return $this->belongsToMany(Amenity::class, 'reservation_amenities')
                     ->withPivot('quantity', 'price')
                     ->withTimestamps();
+    }
+
+    public function checkedInBy()
+    {
+        return $this->belongsTo(Staff::class, 'checked_in_by');
     }
 
     /**

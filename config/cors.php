@@ -19,7 +19,11 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [env('FRONTEND_URL', 'http://localhost:3000')],
+    'allowed_origins' => [
+        env('FRONTEND_URL', 'http://localhost:3000'),
+        'http://localhost', // Add this for WPF
+        '*', // Or temporarily allow all for testing
+    ],
 
     'allowed_origins_patterns' => [],
 

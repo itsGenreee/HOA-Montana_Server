@@ -65,125 +65,157 @@ public function index()
     /**
      * Create a new reservation
      */
-public function store(Request $request)
-{
-    // Validate incoming request
-    $validated = $request->validate([
-        'facility_id' => 'required|exists:facilities,id',
-        'date'        => 'required|date',
-        'start_time'  => 'required|date_format:H:i',
-        'end_time'    => 'required|date_format:H:i',
-        'guest_count' => 'nullable|integer',
-        'event_type'  => 'nullable|string|max:255',
-        'amenities'   => 'nullable|array',
-        'amenities.*.amenity_id' => 'required|exists:amenities,id',
-        'amenities.*.quantity'   => 'required|integer|min:0',
-    ]);
-
-    try {
-        // Generate reservation token
-        $reservationToken = Str::uuid()->toString();
-
-        $digitalSignature = DigitalSignature::sign($reservationToken);
-
-        // Calculate fees separately
-        $facility = Facility::find($validated['facility_id']);
-
-        if (!$facility) {
-            return response()->json(['message' => 'Facility not found'], 404);
-        }
-
-        // Get the most recent fee with fallback
-        $latestFee = $facility->fees()->latest()->first();
-        $facilityFee = $latestFee ? $latestFee->fee : 100;
-
-        $amenitiesFee = 0;
-
-        // Process amenities if provided
-        if (!empty($validated['amenities'])) {
-            foreach ($validated['amenities'] as $amenityItem) {
-                $amenity = Amenity::find($amenityItem['amenity_id']);
-
-                if ($amenity && $amenityItem['quantity'] > 0) {
-                    // Check quantity limits
-                    if ($amenity->max_quantity !== null && $amenityItem['quantity'] > $amenity->max_quantity) {
-                        throw new \Exception("Quantity for {$amenity->name} exceeds maximum allowed quantity of {$amenity->max_quantity}");
-                    }
-
-                    // Calculate amenity cost using the CURRENT price (snapshot)
-                    $amenityCost = $amenity->price * $amenityItem['quantity'];
-                    $amenitiesFee += $amenityCost;
-                }
-            }
-        }
-
-        $totalFee = $facilityFee + $amenitiesFee;
-
-        // Create reservation
-        $reservation = Reservation::create([
-            'user_id'           => Auth::id(),
-            'facility_id'       => $validated['facility_id'],
-            'date'              => $validated['date'],
-            'start_time'        => $validated['start_time'],
-            'end_time'          => $validated['end_time'],
-            'facility_fee'      => $facilityFee,
-            'amenities_fee'     => $amenitiesFee,
-            'total_fee'         => $totalFee,
-            'status'            => 'pending',
-            'event_type'        => $validated['event_type'] ?? null,
-            'guest_count'       => $validated['guest_count'] ?? null,
-            'reservation_token' => $reservationToken,
-            'digital_signature' => $digitalSignature,
-            'payment_id'        => null,
+    public function store(Request $request)
+    {
+        // Validate incoming request
+        $validated = $request->validate([
+            'facility_id' => 'required|exists:facilities,id',
+            'date'        => 'required|date',
+            'start_time'  => 'required|date_format:H:i',
+            'end_time'    => 'required|date_format:H:i',
+            'guest_count' => 'nullable|integer',
+            'event_type'  => 'nullable|string|max:255',
+            'amenities'   => 'nullable|array',
+            'amenities.*.amenity_id' => 'required|exists:amenities,id',
+            'amenities.*.quantity'   => 'required|integer|min:0',
         ]);
 
-        // Attach amenities to reservation with PRICE SNAPSHOT
-        if (!empty($validated['amenities'])) {
-            foreach ($validated['amenities'] as $amenityItem) {
-                $amenity = Amenity::find($amenityItem['amenity_id']);
+        try {
+            // Generate reservation token
+            $reservationToken = Str::uuid()->toString();
 
-                if ($amenity && $amenityItem['quantity'] > 0) {
-                    // Store the INDIVIDUAL UNIT PRICE (not total) as snapshot
-                    $reservation->amenities()->attach($amenityItem['amenity_id'], [
-                        'quantity' => $amenityItem['quantity'],
-                        'price'    => $amenity->price, // ← UNIT PRICE SNAPSHOT
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
+            $digitalSignature = DigitalSignature::sign($reservationToken);
+
+            // Calculate fees separately
+            $facility = Facility::find($validated['facility_id']);
+
+            if (!$facility) {
+                return response()->json(['message' => 'Facility not found'], 404);
+            }
+
+            // Get the most recent fee with fallback
+            $latestFee = $facility->fees()->latest()->first();
+            $facilityFee = $latestFee ? $latestFee->fee : 100;
+
+            $amenitiesFee = 0;
+
+            // Process amenities if provided
+            if (!empty($validated['amenities'])) {
+                foreach ($validated['amenities'] as $amenityItem) {
+                    $amenity = Amenity::find($amenityItem['amenity_id']);
+
+                    if ($amenity && $amenityItem['quantity'] > 0) {
+                        // Check quantity limits
+                        if ($amenity->max_quantity !== null && $amenityItem['quantity'] > $amenity->max_quantity) {
+                            throw new \Exception("Quantity for {$amenity->name} exceeds maximum allowed quantity of {$amenity->max_quantity}");
+                        }
+
+                        // Calculate amenity cost using the CURRENT price (snapshot)
+                        $amenityCost = $amenity->price * $amenityItem['quantity'];
+                        $amenitiesFee += $amenityCost;
+                    }
                 }
             }
+
+            $totalFee = $facilityFee + $amenitiesFee;
+
+            // Create reservation
+            $reservation = Reservation::create([
+                'user_id'           => Auth::id(),
+                'facility_id'       => $validated['facility_id'],
+                'date'              => $validated['date'],
+                'start_time'        => $validated['start_time'],
+                'end_time'          => $validated['end_time'],
+                'facility_fee'      => $facilityFee,
+                'amenities_fee'     => $amenitiesFee,
+                'total_fee'         => $totalFee,
+                'status'            => 'pending',
+                'event_type'        => $validated['event_type'] ?? null,
+                'guest_count'       => $validated['guest_count'] ?? null,
+                'reservation_token' => $reservationToken,
+                'digital_signature' => $digitalSignature,
+                'payment_id'        => null,
+            ]);
+
+            // Attach amenities to reservation with PRICE SNAPSHOT
+            if (!empty($validated['amenities'])) {
+                foreach ($validated['amenities'] as $amenityItem) {
+                    $amenity = Amenity::find($amenityItem['amenity_id']);
+
+                    if ($amenity && $amenityItem['quantity'] > 0) {
+                        // Store the INDIVIDUAL UNIT PRICE (not total) as snapshot
+                        $reservation->amenities()->attach($amenityItem['amenity_id'], [
+                            'quantity' => $amenityItem['quantity'],
+                            'price'    => $amenity->price, // ← UNIT PRICE SNAPSHOT
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
+            }
+
+            // Load amenities relationship for response
+            $reservation->load('amenities');
+
+            return response()->json([
+                'message' => 'Reservation created and signed successfully',
+                'reservation' => $reservation,
+                'breakdown' => [
+                    'facility_fee' => $facilityFee,
+                    'amenities_fee' => $amenitiesFee,
+                    'total_fee' => $totalFee
+                ]
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to create reservation',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        // Load amenities relationship for response
-        $reservation->load('amenities');
-
-        return response()->json([
-            'message' => 'Reservation created and signed successfully',
-            'reservation' => $reservation,
-            'breakdown' => [
-                'facility_fee' => $facilityFee,
-                'amenities_fee' => $amenitiesFee,
-                'total_fee' => $totalFee
-            ]
-        ], 201);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'Failed to create reservation',
-            'error' => $e->getMessage(),
-        ], 500);
     }
+
+    public function pendingReservationCount()
+    {
+
+        $pendingCount = Reservation::where('status', 'pending')->count();
+
+        return response()->json([
+            'pending_reservations' => $pendingCount
+        ]);
+    }
+
+    public function todayReservationCount()
+    {
+        $today = Carbon::today()->toDateString();
+
+        $todayCount = Reservation::where('date', $today)
+            ->whereIn('status', ['confirmed', 'checked_in'])
+            ->count();
+
+        return response()->json([
+            'today' => $today,
+            'total_reservations_today' => $todayCount
+        ]);
+    }
+
+    public function totalReservationCount()
+    {
+    $totalCount = Reservation::count();
+
+    $breakdown = [
+        'pending' => Reservation::where('status', 'pending')->count(),
+        'confirmed' => Reservation::where('status', 'confirmed')->count(),
+        'checked_in' => Reservation::where('status', 'checked_in')->count(),
+        'canceled' => Reservation::where('status', 'canceled')->count(),
+    ];
+
+    return response()->json([
+        'total_reservations' => $totalCount,
+        'breakdown' => $breakdown,
+        'scope' => 'all_reservations_past_present_future'
+    ]);
 }
-
-
-    /**
-     * Verify reservation signature
-     */
-
-
-    /**
-     * Show a single reservation
-     */
     public function show($id)
     {
         $reservation = Reservation::findOrFail($id);

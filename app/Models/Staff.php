@@ -25,6 +25,11 @@ class Staff extends Authenticatable
         'remember_token',
     ];
 
+    public function checkedInReservations()
+    {
+        return $this->hasMany(Reservation::class, 'checked_in_by');
+    }
+
     public function resolveRouteBinding($value, $field = null)
     {
         return $this->where('id', $value)->firstOrFail();

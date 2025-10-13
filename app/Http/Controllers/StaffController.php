@@ -102,10 +102,13 @@ class StaffController extends Controller
                 ], 404);
             }
 
+            $staff = $request->user();
+
             // Update reservation status
             $reservation->update([
                 'status' => 'checked_in',
                 'checked_in_at' => now(),
+                'checked_in_by' => $staff->id,
             ]);
 
             return response()->json([

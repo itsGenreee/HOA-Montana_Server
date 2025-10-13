@@ -1,9 +1,10 @@
 <?php
 
-use App\Http\Controllers\StaffController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\StaffController;
 use App\Http\Controllers\AmenityController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
@@ -25,13 +26,6 @@ Route::middleware('auth:sanctum')->get('/me', function (Request $request) {
     ]);
 });
 
-Route::middleware('auth:sanctum')->post('/reservations/store', [ReservationController::class, 'store']);
-Route::middleware('auth:sanctum')->get('/reservations', [ReservationController::class, 'index']);
-Route::middleware('auth:sanctum')->get('/availfacility1/{id}/{date}', [FacilityController::class, 'availability1']);
-Route::middleware('auth:sanctum')->get('/availfacility2/{id}/{date}', [FacilityController::class, 'availability2']);
-Route::middleware('auth:sanctum')->get('/availfacility3/{id}/{date}', [FacilityController::class, 'availability3']);
-Route::middleware('auth:sanctum')->get('/amenities', [AmenityController::class, 'index']);
-
 Route::get('/refreshpubkey', function () {
     try {
         $publicKey = file_get_contents(storage_path('app/keys/public.pem'));
@@ -45,6 +39,24 @@ Route::get('/refreshpubkey', function () {
         return response()->json(['error' => 'Failed to get public key'], 500);
     }
 });
+Route::middleware('auth:sanctum')->group(function() {
+    Route::prefix('payment')->group(function () {
+        Route::post('/create-intent', [PaymentController::class, 'createPaymentIntent']);
+        Route::post('/confirm', [PaymentController::class, 'confirmPayment']);
+        Route::post('/webhook', [PaymentController::class, 'handleWebhook']);
+        Route::get('/status', [PaymentController::class, 'checkPaymentStatus']);
+    });
+
+    Route::post('/reservations/store', [ReservationController::class, 'store']);
+    Route::get('/reservations', [ReservationController::class, 'index']);
+    Route::get('/availfacility1/{id}/{date}', [FacilityController::class, 'availability1']);
+    Route::get('/availfacility2/{id}/{date}', [FacilityController::class, 'availability2']);
+    Route::get('/availfacility3/{id}/{date}', [FacilityController::class, 'availability3']);
+    Route::get('/amenities', [AmenityController::class, 'index']);
+
+
+});
+
 
 Route::prefix('staff')->group(function () {
     Route::post('/login', [StaffAuthController::class, 'login']);
@@ -55,8 +67,12 @@ Route::prefix('staff')->group(function () {
         Route::post('/verify-reservation', [StaffController::class, 'verifyReservation']);
         Route::post('/check-in', [StaffController::class, 'checkIn']);
 
-        // Your future QR code routes will go here
-        //Route::post('/verify-qr', [StaffController::class, 'verifyQr']);
-        //Route::post('/check-in', [StaffController::class, 'checkIn']);
+        Route::get('/reservations/pending-reservation', [ReservationController::class, 'pendingReservationCount']);
+        Route::get('/reservations/today-reservation', [ReservationController::class, 'todayReservationCount']);
+        Route::get('/reservations/total-reservation', [ReservationController::class, 'totalReservationCount']);
+
+        Route::get('/availfacility1/{id}/{date}', [FacilityController::class, 'availability1']);
+        Route::get('/availfacility2/{id}/{date}', [FacilityController::class, 'availability2']);
+        Route::get('/availfacility3/{id}/{date}', [FacilityController::class, 'availability3']);
     });
 });

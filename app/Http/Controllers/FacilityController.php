@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Facility;
 use Carbon\Carbon;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class FacilityController extends Controller
 {
+    //For Tennis Court
     public function availability1($id, $date, Request $request)
     {
         if (!$date) {
@@ -46,8 +48,7 @@ class FacilityController extends Controller
             $slots[] = [
                 'start_time' => $slotStart->format('g:i A'),
                 'end_time'   => $slotEnd->format('g:i A'),
-                // If you want fee to ALWAYS come from facility_fees, use $baseFee:
-                'fee'        => $baseFee,
+                'fee'        => $reservation ? $reservation->fee : $baseFee,
                 'available'  => !$reservation,
                 'user'       => $reservation ? $reservation->user : null,
             ];
@@ -58,6 +59,7 @@ class FacilityController extends Controller
         return response()->json($slots);
     }
 
+    //For Basketball Court
     public function availability2($id, $date, Request $request)
         {
         if (!$date) {
@@ -114,8 +116,8 @@ class FacilityController extends Controller
         return response()->json($slots);
     }
 
-    public function availability3($id, $date, Request $request)
-{
+    //For Event Place
+    public function availability3($id, $date, Request $request){
     if (!$date) {
         return response()->json(['error' => 'Date is required'], 400);
     }
@@ -147,13 +149,111 @@ class FacilityController extends Controller
         $slots[] = [
             'start_time' => $feeStart->format('g:i A'),
             'end_time'   => $feeEnd->format('g:i A'),
-            'fee'        => $feeEntry->fee,  // taken directly from facility_fees
+            'fee'        => $reservation ? $reservation->fee : $feeEntry->fee,
             'available'  => !$reservation,
             'user'       => $reservation ? $reservation->user : null,
         ];
     }
 
     return response()->json($slots);
-}
+    }
 
+    //Change Fee for Tennis Court
+    public function changeFee1($id, Request $request) {
+        if (!$id) {
+            return response()->json(['error' => 'Facility is Required'], 400);
+        }
+
+        // Validate the request
+        $request->validate([
+            'fee' => 'required|numeric|min:0'
+        ]);
+
+        // Load facility with its fees
+        $facility = Facility::with('fees')->findOrFail($id);
+
+        // Find the first fee record and update it
+        $feeRecord = $facility->fees->first();
+
+        if (!$feeRecord) {
+            return response()->json(['error' => 'No fee record found for this facility'], 400);
+        }
+
+        // Simply update the fee
+        $feeRecord->update([
+            'fee' => $request->fee
+        ]);
+
+        return response()->json([
+            'message' => $facility->name . ' fee updated successfully',
+            'fee' => $request->fee
+        ]);
+    }
+
+    public function changeFee2($id, Request $request) {
+    if (!$id) {
+        return response()->json(['error' => 'Facility is Required'], 400);
+    }
+
+    // Validate the request
+    $request->validate([
+        'name' => 'required|in:day,night', // Must be 'day' or 'night'
+        'fee' => 'required|numeric|min:0'
+    ]);
+
+    // Load facility with its fees
+    $facility = Facility::with('fees')->findOrFail($id);
+
+    // Find the specific shift fee by type AND name
+    $shiftFee = $facility->fees()
+        ->where('type', 'shift')
+        ->where('name', $request->name)
+        ->first();
+
+    if (!$shiftFee) {
+        return response()->json(['error' => $request->name . ' shift fee not found for this facility'], 400);
+    }
+
+    // Update the specific shift fee
+    $shiftFee->update([
+        'fee' => $request->fee
+    ]);
+
+    return response()->json([
+        'message' => $facility->name . ' ' . $request->name . ' shift fee updated successfully',
+        'fee' => $request->fee
+    ]);
+    }
+
+    public function changeFee3($id, Request $request) {
+    if (!$id) {
+        return response()->json(['error' => 'Facility is Required'], 400);
+    }
+
+    // Validate the request
+    $request->validate([
+        'name' => 'required|in:Morning Event,Afternoon Event', // Must be specific block name
+        'fee' => 'required|numeric|min:0'
+    ]);
+
+    // Load facility with its fees
+    $facility = Facility::with('fees')->findOrFail($id);
+
+    // Find the specific block fee by name
+    $blockFee = $facility->fees()->where('name', $request->name)->first();
+
+    if (!$blockFee) {
+        return response()->json(['error' => $request->name . ' not found for this facility'], 400);
+    }
+
+    // Update the specific block fee
+    $blockFee->update([
+        'fee' => $request->fee
+    ]);
+
+    return response()->json([
+        'message' => $facility->name . ' ' . $request->name . ' fee updated successfully',
+        'fee' => $request->fee
+    ]);
+    }
 }

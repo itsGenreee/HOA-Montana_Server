@@ -31,7 +31,7 @@ return new class extends Migration
 
 
             // Status
-            $table->enum('status', ['pending', 'confirmed', 'canceled', 'checked-in'])->default('pending');
+            $table->enum('status', ['pending', 'confirmed', 'canceled', 'checked_in'])->default('pending');
 
             //Reservation Info for Event Place
             $table->string('event_type')->nullable();
@@ -41,7 +41,14 @@ return new class extends Migration
             $table->uuid('reservation_token')->unique();
             $table->text('digital_signature')->nullable();
             $table->string('payment_id')->nullable();
-
+            $table->datetime('checked_in_at')->nullable();
+            $table->foreignId('checked_in_by')->nullable()->after('checked_in_at')
+                  ->constrained('staffs')
+                  ->onDelete('set null');
+            $table->string('payment_intent_id')->nullable()->after('reservation_token');
+            $table->enum('payment_status', ['pending', 'processing', 'paid', 'failed', 'refunded'])->default('pending')->after('payment_intent_id');
+            $table->timestamp('paid_at')->nullable()->after('payment_status');
+            $table->string('payment_method')->nullable()->after('paid_at'); // gcash
             $table->timestamps();
         });
     }
