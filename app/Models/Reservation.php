@@ -18,10 +18,19 @@ class Reservation extends Model
         'start_time',
         'end_time',
         'facility_fee',
+        'amenities_fee', // You were also missing this one
         'total_fee',
         'status',
-        'event_type',        // e.g. Birthday, Wedding
-        'guest_count',       // number of guests
+        'confirmed_at',   // ← Add this
+        'confirmed_by',   // ← Add this
+        'cancelled_at',   // ← Add this if you use it in cancelReservation
+        'cancellation_reason', // ← Add this if you use it
+        'cancelled_by',
+        'event_type',
+        'guest_count',
+        'customer_name',
+        'customer_phone',
+        'customer_email',
         'reservation_token',
         'digital_signature',
         'payment_id',
@@ -31,6 +40,7 @@ class Reservation extends Model
         'payment_status',
         'paid_at',
         'payment_method',
+        'payment_deadline', // ← Add this if you use it
         'payment_error',
         'payment_metadata'
     ];
@@ -74,14 +84,23 @@ class Reservation extends Model
         return $this->belongsTo(Staff::class, 'checked_in_by');
     }
 
+    // Add this relationship for confirmed_by
+    public function confirmedBy()
+    {
+        return $this->belongsTo(Staff::class, 'confirmed_by');
+    }
+
     /**
      * Optional: Casts for date/time and money
      */
     protected $casts = [
         'date' => 'date',                   // Carbon
-        'start_time' => 'datetime:H:i',
-        'end_time' => 'datetime:H:i',
         'facility_fee' => 'decimal:2',
+        'amenities_fee' => 'decimal:2', // Add this if you use it
         'total_fee' => 'decimal:2',
+        'confirmed_at' => 'datetime', // Add this
+        'cancelled_at' => 'datetime', // Add this
+        'paid_at' => 'datetime', // Add this
+        'payment_deadline' => 'datetime', // Add this if you use it
     ];
 }

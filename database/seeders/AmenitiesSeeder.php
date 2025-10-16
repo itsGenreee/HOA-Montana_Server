@@ -12,18 +12,18 @@ class AmenitiesSeeder extends Seeder
         DB::table('amenities')->insert([
             [
                 'name' => 'Chair',
-                'price' => 20.00,
-                'max_quantity' => 50,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Table',
-                'price' => 50.00,
+                'price' => 8.00,
                 'max_quantity' => 30,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            // [
+            //     'name' => 'Table',
+            //     'price' => 50.00,
+            //     'max_quantity' => 30,
+            //     'created_at' => now(),
+            //     'updated_at' => now(),
+            // ],
             [
                 'name' => 'Videoke',
                 'price' => 700.00,

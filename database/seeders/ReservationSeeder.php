@@ -65,12 +65,13 @@ class ReservationSeeder extends Seeder
                 'facility_fee' => $facilityFee,
                 'amenities_fee' => 0,
                 'total_fee' => 0,
-                'status' => 'confirmed',
+                'status' => 'pending',
                 'event_type' => 'Birthday',
                 'guest_count' => 50,
                 'reservation_token' => $reservationToken,
                 'digital_signature' => $digitalSignature,
                 'payment_id' => null,
+                'payment_deadline' => '2025-11-05 08:00:00'
             ]);
 
             // Insert amenities for this reservation
@@ -111,7 +112,6 @@ class ReservationSeeder extends Seeder
         }
 
         if ($user && $tennisCourt) {
-            // === Reservation #3 (Swimming Pool - PENDING PAYMENT) ===
             $reservationToken = Str::uuid()->toString();
 
             $digitalSignature = DigitalSignature::sign($reservationToken);
@@ -125,12 +125,10 @@ class ReservationSeeder extends Seeder
                 'facility_id' => $tennisCourt->id,
                 'date' => '2025-11-25',
                 'start_time' => '10:00',
-                'end_time' => '12:00',
+                'end_time' => '11:00',
                 'facility_fee' => $facilityFee,
                 'total_fee' => $facilityFee,
                 'status' => 'pending',
-                'event_type' => 'Family Swim',
-                'guest_count' => 4,
                 'reservation_token' => $reservationToken,
                 'digital_signature' => $digitalSignature,
                 'payment_id' => null,
@@ -139,6 +137,97 @@ class ReservationSeeder extends Seeder
                 'payment_status' => 'pending',
                 'paid_at' => null,
                 'payment_method' => null,
+                'payment_deadline' => '2025-11-25 10:00:00',
+            ]);
+        }
+
+        if ($user && $tennisCourt) {
+            $reservationToken = Str::uuid()->toString();
+
+            $digitalSignature = DigitalSignature::sign($reservationToken);
+
+            $facilityFee = DB::table('facility_fees')
+                ->where('facility_id', $tennisCourt->id)
+                ->value('fee');
+
+            Reservation::create([
+                'user_id' => $user->id,
+                'facility_id' => $tennisCourt->id,
+                'date' => '2025-11-25',
+                'start_time' => '10:00',
+                'end_time' => '11:00',
+                'facility_fee' => $facilityFee,
+                'total_fee' => $facilityFee,
+                'status' => 'pending',
+                'reservation_token' => $reservationToken,
+                'digital_signature' => $digitalSignature,
+                'payment_id' => null,
+                // New PayMongo fields (if migration ran)
+                'payment_intent_id' => null,
+                'payment_status' => 'pending',
+                'paid_at' => null,
+                'payment_method' => null,
+                'payment_deadline' => '2025-11-25 10:00:00',
+            ]);
+        }
+
+        if ($user && $tennisCourt) {
+            $reservationToken = Str::uuid()->toString();
+
+            $digitalSignature = DigitalSignature::sign($reservationToken);
+
+            $facilityFee = DB::table('facility_fees')
+                ->where('facility_id', $tennisCourt->id)
+                ->value('fee');
+
+            Reservation::create([
+                'user_id' => $user->id,
+                'facility_id' => $tennisCourt->id,
+                'date' => '2025-11-25',
+                'start_time' => '10:00',
+                'end_time' => '11:00',
+                'facility_fee' => $facilityFee,
+                'total_fee' => $facilityFee,
+                'status' => 'pending',
+                'reservation_token' => $reservationToken,
+                'digital_signature' => $digitalSignature,
+                'payment_id' => null,
+                // New PayMongo fields (if migration ran)
+                'payment_intent_id' => null,
+                'payment_status' => 'pending',
+                'paid_at' => null,
+                'payment_method' => null,
+                'payment_deadline' => '2025-11-25 10:00:00',
+            ]);
+        }
+
+        if ($user && $tennisCourt) {
+            $reservationToken = Str::uuid()->toString();
+
+            $digitalSignature = DigitalSignature::sign($reservationToken);
+
+            $facilityFee = DB::table('facility_fees')
+                ->where('facility_id', $tennisCourt->id)
+                ->value('fee');
+
+            Reservation::create([
+                'user_id' => $user->id,
+                'facility_id' => $tennisCourt->id,
+                'date' => '2025-11-20',
+                'start_time' => '11:00',
+                'end_time' => '12:00',
+                'facility_fee' => $facilityFee,
+                'total_fee' => $facilityFee,
+                'status' => 'pending',
+                'reservation_token' => $reservationToken,
+                'digital_signature' => $digitalSignature,
+                'payment_id' => null,
+                // New PayMongo fields (if migration ran)
+                'payment_intent_id' => null,
+                'payment_status' => 'pending',
+                'paid_at' => null,
+                'payment_method' => null,
+                'payment_deadline' => '2025-11-20 11:00:00',
             ]);
         }
     }

@@ -74,5 +74,14 @@ Route::prefix('staff')->group(function () {
         Route::get('/availfacility1/{id}/{date}', [FacilityController::class, 'availability1']);
         Route::get('/availfacility2/{id}/{date}', [FacilityController::class, 'availability2']);
         Route::get('/availfacility3/{id}/{date}', [FacilityController::class, 'availability3']);
+
+        Route::get('/amenities', [AmenityController::class, 'index']);
+        Route::get('/reservations/pending', [StaffController::class, 'getPendingReservations']);
+        Route::get('/reservations/debug-conflicting-reservations/{id}', [StaffController::class, 'debugConflictingReservations']);
+        Route::post('/reservations/store-by-staff', [ReservationController::class, 'storeByStaff']);
+        Route::post('/reservations/{id}/confirm-pending-reservation', [StaffController::class, 'confirmReservation']);
+        Route::post('/reservations/{id}/cancel-pending-reservation', [StaffController::class, 'cancelReservation']);
+        Route::post('/reservations/{id}/cancel-confirmed-reservation', [StaffController::class, 'cancelConfirmedReservation']);
+
     });
 });
