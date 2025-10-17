@@ -20,5 +20,29 @@ class UserSeeder extends Seeder
             'password'   => Hash::make('password123'),
             'status'     => User::STATUS_UNVERIFIED,
         ]);
+
+        User::create([
+            'first_name' => 'Francis Edgard',
+            'last_name'  => 'Ibanez',
+            'email'      => 'francisedgard.ibanez@gmail.com',
+            'password'   => Hash::make('password123'),
+            'status'     => User::STATUS_UNVERIFIED,
+        ]);
+
+        User::create([
+            'first_name' => 'John Cedric',
+            'last_name'  => 'Lorenzo',
+            'email'      => 'johncedric.lorenzo@gmail.com',
+            'password'   => Hash::make('password123'),
+            'status'     => User::STATUS_UNVERIFIED,
+        ]);
+
+        User::create([
+            'first_name' => 'Jhanra',
+            'last_name'  => 'Ordoviz',
+            'email'      => 'jhanra.ordoviz@gmail.com',
+            'password'   => Hash::make('password123'),
+            'status'     => User::STATUS_UNVERIFIED,
+        ]);
     }
 }

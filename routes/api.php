@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\AmenityController;
 use App\Http\Controllers\PaymentController;
@@ -83,5 +84,10 @@ Route::prefix('staff')->group(function () {
         Route::post('/reservations/{id}/cancel-pending-reservation', [StaffController::class, 'cancelReservation']);
         Route::post('/reservations/{id}/cancel-confirmed-reservation', [StaffController::class, 'cancelConfirmedReservation']);
 
+        Route::get('/users/unverified', [UserController::class, 'getUnverifiedUsers']);
+        Route::get('/users/verified', [UserController::class, 'getVerifiedUsers']);
+        Route::get('/users', [UserController::class, 'getAllUsers']);
+        Route::post('/users/{id}/verify', [UserController::class, 'verifyUser']);
+        Route::post('/users/{id}/reject', [UserController::class, 'rejectUser']);
     });
 });
