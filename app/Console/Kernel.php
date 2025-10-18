@@ -12,7 +12,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('reservations:cancel-expired')->hourly();
+        $schedule->command('reservations:cancel-expired')->everyMinute();
     }
 
     /**
@@ -22,6 +22,8 @@ class Kernel extends ConsoleKernel
     {
         $this->load(__DIR__.'/Commands');
 
-        require base_path('routes/console.php');
+        require __DIR__.'/Commands/CancelExpiredReservations.php';
+
+        require base_path('app/');
     }
 }

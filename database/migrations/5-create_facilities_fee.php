@@ -15,7 +15,8 @@ return new class extends Migration
             // Type of fee: base, shift, block
             $table->enum('type', ['base', 'shift', 'block'])->default('base');
 
-            $table->decimal('fee', 8, 2); // price for this fee
+            $table->decimal('fee', 8, 2); // facility fee
+            $table->decimal('discounted_fee', 8, 2)->nullable();
 
             // Option for shift/block
             $table->time('start_time')->nullable(); // start of shift/block

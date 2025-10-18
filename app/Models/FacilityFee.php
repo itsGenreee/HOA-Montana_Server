@@ -16,8 +16,9 @@ class FacilityFee extends Model
         'type',        // 'base', 'shift', 'block'
         'name',        // optional: day/night, block name
         'fee',
-        'start_time',  // nullable
-        'end_time',    // nullable
+        'discounted_fee',
+        'start_time',
+        'end_time',
     ];
 
     // Define relationship to Facility

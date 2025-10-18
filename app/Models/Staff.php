@@ -10,7 +10,11 @@ class Staff extends Authenticatable
 {
     use HasFactory, HasApiTokens;
 
-    protected $table = 'staffs';
+        public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->table = 'staffs';
+    }
 
     protected $fillable = [
         'first_name',

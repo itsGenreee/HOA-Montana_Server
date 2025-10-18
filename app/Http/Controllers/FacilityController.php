@@ -29,6 +29,7 @@ class FacilityController extends Controller
 
             // Pick a fee to use for open slots (simplest: first fee row)
             $baseFee = optional($facility->fees->first())->fee ?? 100;
+            $discountedFee = optional($facility->fees->first())->discounted_fee ?? 100;
 
             $slots = [];
             $start    = Carbon::parse($facility->start_time);
@@ -51,6 +52,7 @@ class FacilityController extends Controller
                     'start_time' => $slotStart->format('g:i A'),
                     'end_time'   => $slotEnd->format('g:i A'),
                     'fee'        => $reservation ? $reservation->total_fee : $baseFee,
+                    'discounted_fee' => $reservation ? $reservation->facility_fee : $discountedFee,
                     'available'  => !$reservation,
                     'user'       => $reservation && $reservation->user_id ? $reservation->user : null,
                     'customer_name' => $reservation ? $reservation->customer_name : null,
@@ -114,10 +116,13 @@ class FacilityController extends Controller
                     return $resStart < $slotEnd && $resEnd > $slotStart;
                 });
 
+                $discountFee = $slotFee ? $slotFee->discounted_fee : 0;
+
                 $slots[] = [
                     'start_time' => $slotStart->format('g:i A'),
                     'end_time'   => $slotEnd->format('g:i A'),
                     'fee'        => $reservation ? $reservation->total_fee : ($slotFee->fee ?? 0), // Use facility_fee
+                    'discounted_fee' => $reservation ? $reservation->facility_fee : $discountFee,
                     'available'  => !$reservation,
                     'user'       => $reservation ? $reservation->user : null,
                     'customer_name' => $reservation ? $reservation->customer_name : null, // Added customer_name
@@ -174,6 +179,7 @@ class FacilityController extends Controller
                     'start_time' => $feeStart->format('g:i A'),
                     'end_time'   => $feeEnd->format('g:i A'),
                     'fee'        => $reservation ? $reservation->total_fee : $feeEntry->fee, // Use facility_fee
+                    'discounted_fee' => $reservation ? $reservation->facility_fee : $feeEntry->discounted_fee,
                     'available'  => !$reservation,
                     'user'       => $reservation ? $reservation->user : null,
                     'customer_name' => $reservation ? $reservation->customer_name : null, // Added customer_name

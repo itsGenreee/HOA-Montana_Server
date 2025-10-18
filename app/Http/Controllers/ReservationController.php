@@ -205,135 +205,133 @@ public function index()
     }
 
     // In your ReservationController.php
-    public function storeByStaff(Request $request)
-    {
-        $validated = $request->validate([
-            'facility_id' => 'required|exists:facilities,id',
-            'date'        => 'required|date',
-            'start_time'  => 'required|date_format:H:i',
-            'end_time'    => 'required|date_format:H:i',
-            'guest_count' => 'nullable|integer',
-            'event_type'  => 'nullable|string|max:255',
-            'amenities'   => 'nullable|array',
-            'amenities.*.amenity_id' => 'required|exists:amenities,id',
-            'amenities.*.quantity'   => 'required|integer|min:0',
+public function storeByStaff(Request $request)
+{
+    $validated = $request->validate([
+        'facility_id' => 'required|exists:facilities,id',
+        'date'        => 'required|date',
+        'start_time'  => 'required|date_format:H:i',
+        'end_time'    => 'required|date_format:H:i',
+        'guest_count' => 'nullable|integer',
+        'event_type'  => 'nullable|string|max:255',
+        'amenities'   => 'nullable|array',
+        'amenities.*.amenity_id' => 'required|exists:amenities,id',
+        'amenities.*.quantity'   => 'required|integer|min:0',
+        'customer_name'  => 'required|string|max:255',
+        'customer_phone' => 'nullable|string|max:20',
+        'customer_email' => 'nullable|email|max:255',
+        'customer_verified' => 'nullable|boolean',
+        'facility_fee' => 'required|numeric', // Use the fee sent from C#
+    ]);
 
-            // Customer information (instead of user_id)
-            'customer_name'  => 'required|string|max:255',
-            'customer_phone' => 'nullable|string|max:20',
-            'customer_email' => 'nullable|email|max:255',
+    try {
+        // Calculate payment deadline
+        $paymentDeadline = Carbon::createFromFormat('Y-m-d H:i', "{$validated['date']} {$validated['start_time']}");
+
+        if ($paymentDeadline->isPast()) {
+            return response()->json([
+                'message' => 'Cannot create reservation for past time slots'
+            ], 400);
+        }
+
+        // Check for conflicting CONFIRMED reservations
+        $conflictingConfirmed = Reservation::where('facility_id', $validated['facility_id'])
+            ->where('date', $validated['date'])
+            ->where('status', 'confirmed')
+            ->where(function($query) use ($validated) {
+                $query->where(function($q) use ($validated) {
+                    $q->where('start_time', '<', $validated['end_time'])
+                    ->where('end_time', '>', $validated['start_time']);
+                });
+            })
+            ->exists();
+
+        if ($conflictingConfirmed) {
+            return response()->json([
+                'message' => 'This time slot is already booked by another user.'
+            ], 400);
+        }
+
+        // USE THE FACILITY FEE SENT FROM C# - don't recalculate
+        $facilityFee = $validated['facility_fee'];
+
+        $amenitiesFee = 0;
+        if (!empty($validated['amenities'])) {
+            foreach ($validated['amenities'] as $amenityItem) {
+                $amenity = Amenity::find($amenityItem['amenity_id']);
+                if ($amenity && $amenityItem['quantity'] > 0) {
+                    $amenityCost = $amenity->price * $amenityItem['quantity'];
+                    $amenitiesFee += $amenityCost;
+                }
+            }
+        }
+
+        $totalFee = $facilityFee + $amenitiesFee;
+
+        // Generate reservation token and signature
+        $reservationToken = Str::uuid()->toString();
+        $digitalSignature = DigitalSignature::sign($reservationToken);
+
+        // Create reservation with customer info instead of user_id
+        $reservation = Reservation::create([
+            'user_id'           => null, // No user account linked
+            'facility_id'       => $validated['facility_id'],
+            'date'              => $validated['date'],
+            'start_time'        => $validated['start_time'],
+            'end_time'          => $validated['end_time'],
+            'facility_fee'      => $facilityFee, // This will be 7000 when discount is applied
+            'amenities_fee'     => $amenitiesFee,
+            'total_fee'         => $totalFee,
+            'status'            => 'confirmed', // Auto-confirm for staff reservations
+            'event_type'        => $validated['event_type'] ?? null,
+            'guest_count'       => $validated['guest_count'] ?? null,
+            'reservation_token' => $reservationToken,
+            'digital_signature' => $digitalSignature,
+            'payment_id'        => 'CASH', // Mark as cash payment
+            'payment_deadline'  => $paymentDeadline,
+            'customer_name'     => $validated['customer_name'],
+            'customer_phone'    => $validated['customer_phone'] ?? null,
+            'customer_email'    => $validated['customer_email'] ?? null,
+            'confirmed_at'      => now(), // Auto-confirm
+            'confirmed_by'      => Auth::id(), // Staff who made the reservation
         ]);
 
-        try {
-            // Calculate payment deadline
-            $paymentDeadline = Carbon::createFromFormat('Y-m-d H:i', "{$validated['date']} {$validated['start_time']}");
-
-            if ($paymentDeadline->isPast()) {
-                return response()->json([
-                    'message' => 'Cannot create reservation for past time slots'
-                ], 400);
-            }
-
-            // Check for conflicting CONFIRMED reservations (same as before)
-            $conflictingConfirmed = Reservation::where('facility_id', $validated['facility_id'])
-                ->where('date', $validated['date'])
-                ->where('status', 'confirmed')
-                ->where(function($query) use ($validated) {
-                    $query->where(function($q) use ($validated) {
-                        // Overlap condition: reservation starts before new one ends AND reservation ends after new one starts
-                        $q->where('start_time', '<', $validated['end_time'])
-                        ->where('end_time', '>', $validated['start_time']);
-                    });
-                })
-                ->exists();
-
-            if ($conflictingConfirmed) {
-                return response()->json([
-                    'message' => 'This time slot is already booked by another user.'
-                ], 400);
-            }
-
-            // Calculate fees (same as before)
-            $facility = Facility::find($validated['facility_id']);
-            $latestFee = $facility->fees()->latest()->first();
-            $facilityFee = $latestFee ? $latestFee->fee : 100;
-
-            $amenitiesFee = 0;
-            if (!empty($validated['amenities'])) {
-                foreach ($validated['amenities'] as $amenityItem) {
-                    $amenity = Amenity::find($amenityItem['amenity_id']);
-                    if ($amenity && $amenityItem['quantity'] > 0) {
-                        $amenityCost = $amenity->price * $amenityItem['quantity'];
-                        $amenitiesFee += $amenityCost;
-                    }
+        // Attach amenities
+        if (!empty($validated['amenities'])) {
+            foreach ($validated['amenities'] as $amenityItem) {
+                $amenity = Amenity::find($amenityItem['amenity_id']);
+                if ($amenity && $amenityItem['quantity'] > 0) {
+                    $reservation->amenities()->attach($amenityItem['amenity_id'], [
+                        'quantity' => $amenityItem['quantity'],
+                        'price'    => $amenity->price,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
                 }
             }
-
-            $totalFee = $facilityFee + $amenitiesFee;
-
-            // Generate reservation token and signature
-            $reservationToken = Str::uuid()->toString();
-            $digitalSignature = DigitalSignature::sign($reservationToken);
-
-            // Create reservation with customer info instead of user_id
-            $reservation = Reservation::create([
-                'user_id'           => null, // No user account linked
-                'facility_id'       => $validated['facility_id'],
-                'date'              => $validated['date'],
-                'start_time'        => $validated['start_time'],
-                'end_time'          => $validated['end_time'],
-                'facility_fee'      => $facilityFee,
-                'amenities_fee'     => $amenitiesFee,
-                'total_fee'         => $totalFee,
-                'status'            => 'confirmed', // Auto-confirm for staff reservations
-                'event_type'        => $validated['event_type'] ?? null,
-                'guest_count'       => $validated['guest_count'] ?? null,
-                'reservation_token' => $reservationToken,
-                'digital_signature' => $digitalSignature,
-                'payment_id'        => 'CASH', // Mark as cash payment
-                'payment_deadline'  => $paymentDeadline,
-                'customer_name'     => $validated['customer_name'],
-                'customer_phone'    => $validated['customer_phone'] ?? null,
-                'customer_email'    => $validated['customer_email'] ?? null,
-                'confirmed_at'      => now(), // Auto-confirm
-                'confirmed_by'      => Auth::id(), // Staff who made the reservation
-            ]);
-
-            // Attach amenities
-            if (!empty($validated['amenities'])) {
-                foreach ($validated['amenities'] as $amenityItem) {
-                    $amenity = Amenity::find($amenityItem['amenity_id']);
-                    if ($amenity && $amenityItem['quantity'] > 0) {
-                        $reservation->amenities()->attach($amenityItem['amenity_id'], [
-                            'quantity' => $amenityItem['quantity'],
-                            'price'    => $amenity->price,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                    }
-                }
-            }
-
-            $reservation->load('amenities');
-
-            return response()->json([
-                'message' => 'Reservation created successfully',
-                'reservation' => $reservation,
-                'qr_code_data' => $reservationToken, // For QR code generation
-                'breakdown' => [
-                    'facility_fee' => $facilityFee,
-                    'amenities_fee' => $amenitiesFee,
-                    'total_fee' => $totalFee
-                ]
-            ], 201);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Failed to create reservation',
-                'error' => $e->getMessage(),
-            ], 500);
         }
+
+        $reservation->load('amenities');
+
+        return response()->json([
+            'message' => 'Reservation created successfully',
+            'reservation' => $reservation,
+            'qr_code_data' => $reservationToken, // For QR code generation
+            'breakdown' => [
+                'facility_fee' => $facilityFee,
+                'amenities_fee' => $amenitiesFee,
+                'total_fee' => $totalFee,
+                'discount_applied' => ($validated['customer_verified'] ?? false) && $validated['facility_id'] == 3
+            ]
+        ], 201);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Failed to create reservation',
+            'error' => $e->getMessage(),
+        ], 500);
     }
+}
 
     public function pendingReservationCount()
     {

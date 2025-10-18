@@ -74,6 +74,34 @@ class ReservationSeeder extends Seeder
                 'payment_deadline' => '2025-11-05 08:00:00'
             ]);
 
+            if ($user && $tennisCourt) {
+            // === Reservation #1 (Tennis Court) ===
+            $reservationToken = Str::uuid()->toString();
+
+            $digitalSignature = DigitalSignature::sign($reservationToken);
+
+            $facilityFee = DB::table('facility_fees')
+                ->where('facility_id', $tennisCourt->id)
+                ->value('fee');
+
+            Reservation::create([
+                'user_id' => $user->id,
+                'facility_id' => $tennisCourt->id,
+                'date' => '2025-10-18',
+                'start_time' => '15:00',
+                'end_time' => '16:00',
+                'facility_fee' => $facilityFee,
+                'total_fee' => $facilityFee,
+                'status' => 'pending',
+                'event_type' => null,
+                'guest_count' => null,
+                'reservation_token' => $reservationToken,
+                'digital_signature' => $digitalSignature,
+                'payment_id' => null,
+                'payment_deadline' => '2025-10-18 15:00:00'
+            ]);
+        }
+
             // Insert amenities for this reservation
             $chair = DB::table('amenities')->where('name', 'Chair')->first();
             $table = DB::table('amenities')->where('name', 'Table')->first();

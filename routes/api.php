@@ -89,5 +89,10 @@ Route::prefix('staff')->group(function () {
         Route::get('/users', [UserController::class, 'getAllUsers']);
         Route::post('/users/{id}/verify', [UserController::class, 'verifyUser']);
         Route::post('/users/{id}/reject', [UserController::class, 'rejectUser']);
+
+        Route::get('/staff-accounts', [StaffAuthController::class, 'index']);
+        Route::post('/staff-accounts/register', [StaffAuthController::class, 'register']);
+        Route::post('/staff-accounts/{id}/update', [StaffAuthController::class, 'update']);
+        Route::post('/staff-accounts/{id}/delete', [StaffAuthController::class, 'destroy']);
     });
 });
