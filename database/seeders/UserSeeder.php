@@ -16,6 +16,7 @@ class UserSeeder extends Seeder
         User::create([
             'first_name' => 'John',
             'last_name'  => 'Doe',
+            'address'    => 'Metro Montaña Village, Brgy. Burgos, Rodriguez, Rizal',
             'email'      => 'johndoe@gmail.com',
             'password'   => Hash::make('password123'),
             'status'     => User::STATUS_UNVERIFIED,
@@ -24,23 +25,17 @@ class UserSeeder extends Seeder
         User::create([
             'first_name' => 'Francis Edgard',
             'last_name'  => 'Ibanez',
+            'address'    => 'Phs 18 B2 Block 6 Lot 9 Pilot Area 3, Brgy. Commonwealth, Quezon City',
             'email'      => 'francisedgard.ibanez@gmail.com',
             'password'   => Hash::make('password123'),
             'status'     => User::STATUS_UNVERIFIED,
         ]);
 
         User::create([
-            'first_name' => 'John Cedric',
-            'last_name'  => 'Lorenzo',
-            'email'      => 'johncedric.lorenzo@gmail.com',
-            'password'   => Hash::make('password123'),
-            'status'     => User::STATUS_UNVERIFIED,
-        ]);
-
-        User::create([
-            'first_name' => 'Jhanra',
-            'last_name'  => 'Ordoviz',
-            'email'      => 'jhanra.ordoviz@gmail.com',
+            'first_name' => 'Jhon Amante',
+            'last_name'  => 'Sales',
+            'address'    => 'B-8, L-15, Pinatubo Street, Montaña Village 1, Burgos, Rodriguez, Rizal',
+            'email'      => 'jhonamante.sales@gmail.com',
             'password'   => Hash::make('password123'),
             'status'     => User::STATUS_UNVERIFIED,
         ]);

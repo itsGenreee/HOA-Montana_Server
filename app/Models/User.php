@@ -16,6 +16,7 @@ class User extends Authenticatable
     const STATUS_UNVERIFIED = 0;
     const STATUS_VERIFIED = 1;
     const STATUS_PENDING_REVIEW = 2;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -24,6 +25,7 @@ class User extends Authenticatable
     protected $fillable = [
         'first_name',
         'last_name',
+        'address',
         'email',
         'password',
         'status',

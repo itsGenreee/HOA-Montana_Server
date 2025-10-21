@@ -14,7 +14,7 @@ class UserController extends Controller
     public function getUnverifiedUsers(): JsonResponse
     {
         $users = User::where('status', User::STATUS_UNVERIFIED)
-                    ->select('id', 'first_name', 'last_name', 'email', 'status', 'created_at')
+                    ->select('id', 'first_name', 'last_name', 'address', 'email', 'status', 'created_at')
                     ->get();
 
         return response()->json([
@@ -30,7 +30,7 @@ class UserController extends Controller
     public function getVerifiedUsers(): JsonResponse
     {
         $users = User::where('status', User::STATUS_VERIFIED)
-                    ->select('id', 'first_name', 'last_name', 'email', 'status', 'created_at')
+                    ->select('id', 'first_name', 'last_name', 'address', 'email', 'status', 'created_at')
                     ->get();
 
         return response()->json([
@@ -52,7 +52,7 @@ class UserController extends Controller
             $query->where('status', $status);
         }
 
-        $users = $query->select('id', 'first_name', 'last_name', 'email', 'status', 'created_at')
+        $users = $query->select('id', 'first_name', 'last_name', 'address', 'email', 'status', 'created_at')
                       ->orderBy('created_at', 'desc')
                       ->paginate(20);
 
@@ -88,7 +88,7 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'User verified successfully',
-            'data' => $user->only(['id', 'first_name', 'last_name', 'email', 'status'])
+            'data' => $user->only(['id', 'first_name', 'last_name', 'address', 'email', 'status'])
         ]);
     }
 
@@ -115,7 +115,7 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'User verification rejected',
-            'data' => $user->only(['id', 'first_name', 'last_name', 'email', 'status'])
+            'data' => $user->only(['id', 'first_name', 'last_name', 'address', 'email', 'status'])
         ]);
     }
 }

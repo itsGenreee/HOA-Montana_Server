@@ -19,13 +19,6 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 
 Route::post('/register', [RegisteredUserController::class, 'store']);
 Route::post('/login', LoginController::class);
-Route::middleware('auth:sanctum')->post('/logout', LogoutController::class);
-
-Route::middleware('auth:sanctum')->get('/me', function (Request $request) {
-    return response()->json([
-        'user' => $request->user()
-    ]);
-});
 
 Route::get('/refreshpubkey', function () {
     try {
@@ -40,6 +33,8 @@ Route::get('/refreshpubkey', function () {
         return response()->json(['error' => 'Failed to get public key'], 500);
     }
 });
+
+
 Route::middleware('auth:sanctum')->group(function() {
     Route::prefix('payment')->group(function () {
         Route::post('/create-intent', [PaymentController::class, 'createPaymentIntent']);
@@ -55,6 +50,13 @@ Route::middleware('auth:sanctum')->group(function() {
     Route::get('/availfacility3/{id}/{date}', [FacilityController::class, 'availability3']);
     Route::get('/amenities', [AmenityController::class, 'index']);
 
+    Route::post('/logout', LogoutController::class);
+
+    Route::get('/me', function (Request $request) {
+        return response()->json([
+            'user' => $request->user()
+        ]);
+    });
 
 });
 
@@ -68,9 +70,13 @@ Route::prefix('staff')->group(function () {
         Route::post('/verify-reservation', [StaffController::class, 'verifyReservation']);
         Route::post('/check-in', [StaffController::class, 'checkIn']);
 
+        // Counts of Reservations for Dashboard
+        Route::get('/reservations/staff-checked-in-count', [ReservationController::class, 'staffCheckedInCount']);
         Route::get('/reservations/pending-reservation', [ReservationController::class, 'pendingReservationCount']);
         Route::get('/reservations/today-reservation', [ReservationController::class, 'todayReservationCount']);
         Route::get('/reservations/total-reservation', [ReservationController::class, 'totalReservationCount']);
+        Route::get('/dashboard/stats', [ReservationController::class, 'getDashboardStats']);
+
 
         Route::get('/availfacility1/{id}/{date}', [FacilityController::class, 'availability1']);
         Route::get('/availfacility2/{id}/{date}', [FacilityController::class, 'availability2']);

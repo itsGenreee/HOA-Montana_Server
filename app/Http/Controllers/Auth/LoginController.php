@@ -29,7 +29,7 @@ class LoginController extends Controller
 
         return response()->json([
             'message' => 'Login successful',
-            'user' => $user->only(['id', 'first_name', 'last_name', 'email', 'status']),
+            'user' => $user,
             'token' => $token,
         ]);
     }

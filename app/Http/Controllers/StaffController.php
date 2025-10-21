@@ -38,12 +38,26 @@ class StaffController extends Controller
             if (!$isValid) {
                 return response()->json([
                     'is_valid' => false,
-                    'message' => 'Digital signature verification failed - QR code may be tampered with'
+                    'message' => 'Digital signature verification failed - QR code may be tampered'
                 ], 400);
             }
 
             // Check reservation status
             if ($reservation->status !== 'confirmed') {
+
+                if ($reservation->status === 'pending') {
+                    return response()->json([
+                        'is_valid' => false,
+                        'message' => 'Reservation is still pending, pay to the HOA Montana Office first.'
+                ]);
+                }
+
+                if ($reservation->status === 'checked_in') {
+                    return response()->json([
+                        'is_valid' => false,
+                        'message' => 'Reservation is already checked-in'
+                ]);
+                }
                 return response()->json([
                     'is_valid' => false,
                     'message' => 'Reservation is not confirmed. Current status: ' . $reservation->status
@@ -56,12 +70,12 @@ class StaffController extends Controller
             $currentTime = time();
 
             // Allow check-in 15 minutes before start time
-            if ($reservationTime > ($currentTime + 900)) {
-                return response()->json([
-                    'is_valid' => false,
-                    'message' => 'Too early for check-in (15 minutes before start time)'
-                ]);
-            }
+            // if ($reservationTime > ($currentTime + 900)) {
+            //     return response()->json([
+            //         'is_valid' => false,
+            //         'message' => 'Too early for check-in (15 minutes before start time)'
+            //     ]);
+            // }
 
             // if ($reservationTime < ($currentTime - 3600)) {
             //     return response()->json([
