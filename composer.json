@@ -11,7 +11,9 @@
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
-        "luigel/laravel-paymongo": "2.x-dev"
+        "luigel/laravel-paymongo": "2.x-dev",
+        "ext-gd": "*",
+        "simplesoftwareio/simple-qrcode": "^4.2"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
