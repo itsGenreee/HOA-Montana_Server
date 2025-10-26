@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\AmenityController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\Auth\LoginController;
@@ -19,6 +20,11 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 
 Route::post('/register', [RegisteredUserController::class, 'store']);
 Route::post('/login', LoginController::class);
+
+Route::post('/password/send-link', [ForgotPasswordController::class, 'sendResetLink']);
+Route::post('/password/verify-otp', [ForgotPasswordController::class, 'verifyOtp']);
+Route::post('/password/reset-password', [ForgotPasswordController::class, 'resetPassword']);
+
 
 Route::get('/refreshpubkey', function () {
     try {

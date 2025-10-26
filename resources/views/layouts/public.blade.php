@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{{ $title ?? 'HOA Montana' }}</title>
+  <title>{{'HOA Montaña' }}</title>
   @vite(['resources/css/app.css','resources/js/app.js'])
 </head>
 <body class="text-gray-900 bg-gray-50">
