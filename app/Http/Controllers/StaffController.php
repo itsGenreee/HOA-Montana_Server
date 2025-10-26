@@ -32,7 +32,7 @@ class StaffController extends Controller
                 ], 404);
             }
 
-            // 👇 Verify ONLY the reservation_token with the digital_signature
+            // 👇 Verify the reservation_token with the digital_signature
             $isValid = DigitalSignature::verify($validated['reservation_token'], $validated['digital_signature']);
 
             if (!$isValid) {
@@ -147,42 +147,66 @@ class StaffController extends Controller
         try {
             $staff = Auth::guard('staff')->user();
 
-            $pendingReservations = Reservation::with(['user', 'facility', 'amenities'])
+            // Get pagination parameters from request
+            $perPage = $request->get('per_page', 10); // Default to 10 items per page
+            $page = $request->get('page', 1); // Default to page 1
+
+            // Build the query with pagination
+            $query = Reservation::with(['user', 'facility', 'amenities'])
                 ->where('status', 'pending')
+                ->orderBy('facility_id')
                 ->orderBy('created_at') // First: who reserved first
                 ->orderBy('date')       // Second: group by date
-                ->orderBy('start_time') // Third: group by start time
-                ->get()
-                ->map(function ($reservation) {
-                    return [
-                        'id' => $reservation->id,
-                        'user_name' => $reservation->user ? $reservation->user->first_name . ' ' . $reservation->user->last_name : null,
-                        'user_email' => $reservation->user ? $reservation->user->email : null,
-                        'user' => $reservation->user, // Include full user object
-                        'facility_name' => $reservation->facility->name,
-                        'date' => $reservation->date,
-                        'start_time' => $reservation->start_time,
-                        'end_time' => $reservation->end_time,
-                        'total_fee' => $reservation->total_fee,
-                        'event_type' => $reservation->event_type,
-                        'guest_count' => $reservation->guest_count,
-                        'payment_deadline' => $reservation->payment_deadline,
-                        'created_at' => $reservation->created_at, // This shows who reserved first
-                        'amenities' => $reservation->amenities->map(function ($amenity) {
-                            return [
-                                'name' => $amenity->name,
-                                'quantity' => $amenity->pivot->quantity,
-                                'price' => $amenity->pivot->price
-                            ];
-                        }),
-                        'time_remaining' => $this->calculateTimeRemaining($reservation->payment_deadline),
-                        'is_expiring_soon' => Carbon::now()->diffInMinutes($reservation->payment_deadline) < 60
-                    ];
-                });
+                ->orderBy('start_time'); // Third: group by start time
+
+            // Get paginated results
+            $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+
+            // Transform the data
+            $transformedReservations = $paginator->getCollection()->map(function ($reservation) {
+                return [
+                    'id' => $reservation->id,
+                    'user_name' => $reservation->user ? $reservation->user->first_name . ' ' . $reservation->user->last_name : null,
+                    'user_email' => $reservation->user ? $reservation->user->email : null,
+                    'user' => $reservation->user, // Include full user object
+                    'facility_name' => $reservation->facility->name,
+                    'date' => $reservation->date,
+                    'start_time' => $reservation->start_time,
+                    'end_time' => $reservation->end_time,
+                    'total_fee' => $reservation->total_fee,
+                    'event_type' => $reservation->event_type,
+                    'guest_count' => $reservation->guest_count,
+                    'payment_deadline' => $reservation->payment_deadline,
+                    'created_at' => $reservation->created_at, // This shows who reserved first
+                    'amenities' => $reservation->amenities->map(function ($amenity) {
+                        return [
+                            'name' => $amenity->name,
+                            'quantity' => $amenity->pivot->quantity,
+                            'price' => $amenity->pivot->price
+                        ];
+                    }),
+                    'time_remaining' => $this->calculateTimeRemaining($reservation->payment_deadline),
+                    'is_expiring_soon' => Carbon::now()->diffInMinutes($reservation->payment_deadline) < 60
+                ];
+            });
+
+            // Replace the collection in the paginator with transformed data
+            $paginator->setCollection($transformedReservations);
 
             return response()->json([
                 'success' => true,
-                'reservations' => $pendingReservations,
+                'reservations' => $paginator->items(),
+                'pagination' => [
+                    'current_page' => $paginator->currentPage(),
+                    'last_page' => $paginator->lastPage(),
+                    'per_page' => $paginator->perPage(),
+                    'total' => $paginator->total(),
+                    'from' => $paginator->firstItem(),
+                    'to' => $paginator->lastItem(),
+                    'has_more_pages' => $paginator->hasMorePages(),
+                    'next_page_url' => $paginator->nextPageUrl(),
+                    'prev_page_url' => $paginator->previousPageUrl(),
+                ],
                 'staff' => [
                     'id' => $staff->id,
                     'first_name' => $staff->first_name,
@@ -260,7 +284,7 @@ class StaffController extends Controller
         }
     }
 
-        // NEW: Cancel reservation (admin function)
+    // NEW: Cancel reservation (admin function)
     public function cancelReservation($id, Request $request)
     {
         try {
@@ -308,12 +332,11 @@ class StaffController extends Controller
             ->where('status', 'confirmed')
             ->where('id', '!=', $reservation->id)
             ->where(function($query) use ($startTime, $endTime) {
-                $query->whereBetween('start_time', [$startTime, $endTime])
-                    ->orWhereBetween('end_time', [$startTime, $endTime])
-                    ->orWhere(function($q) use ($startTime, $endTime) {
-                        $q->where('start_time', '<=', $startTime)
-                            ->where('end_time', '>=', $endTime);
-                    });
+                $query->where(function($q) use ($startTime, $endTime) {
+                    // Original reservation starts during existing reservation
+                    $q->where('start_time', '<', $endTime)
+                    ->where('end_time', '>', $startTime);
+                });
             })
             ->exists();
     }
@@ -344,7 +367,7 @@ class StaffController extends Controller
             ]);
     }
 
-    // Add this temporary debug method to your controller
+    // temporary debug method to controller
     public function debugConflictingReservations($id)
     {
         try {

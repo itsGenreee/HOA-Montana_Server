@@ -37,6 +37,39 @@ class StaffAuthController extends Controller
         ]);
     }
 
+    public function loginAdmin(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => ['required', 'string', 'email'],
+            'password' => ['required', 'string'],
+        ]);
+
+        // Find staff and check credentials FIRST
+        $staff = Staff::where('email', $request->email)->first();
+
+        // Check if staff exists AND password is correct FIRST (security)
+        if (!$staff || !Hash::check($request->password, $staff->password)) {
+            throw ValidationException::withMessages([
+                'email' => [__('auth.failed')],
+            ]);
+        }
+
+        // THEN check if they're admin (after authentication)
+        if ($staff->role !== 'admin') { // Changed from status to role
+            return response()->json([
+                'message' => 'Only administrators are allowed to login here'
+            ], 403); // Added 403 Forbidden status
+        }
+
+        $token = $staff->createToken('staff_auth_token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Admin login successful',
+            'staff' => $staff->only(['id', 'first_name', 'last_name', 'email', 'role', 'status']),
+            'token' => $token,
+        ]);
+    }
+
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();
@@ -48,8 +81,12 @@ class StaffAuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
+        $staff = $request->user();
+
+        $staff->refresh();
+
         return response()->json([
-            'staff' => $request->user()
+            'staff' => $staff
         ]);
     }
 

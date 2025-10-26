@@ -11,18 +11,10 @@
             Join our thriving community and experience seamless facility reservations right from your smartphone.
         </p>
         <div class="flex flex-col justify-center gap-4 sm:flex-row">
-            <a href="#" class="flex items-center justify-center px-8 py-4 font-medium transition-colors duration-200 rounded-lg bg-on-primary text-primary hover:bg-on-primary/90">
-                <i class="mr-3 text-2xl fab fa-apple"></i>
+           <a href="https://drive.google.com/uc?export=download&id=1h63BLSvxfmpM3rofKzsB8aWp1xQl6aaA" class="flex items-center justify-center px-8 py-4 font-medium transition-colors duration-200 rounded-lg bg-on-primary text-primary hover:bg-on-primary/90">
+                <i class="mr-3 text-2xl fa-solid fa-download"></i>
                 <div class="text-left">
-                    <div class="text-xs">Download on the</div>
-                    <div class="text-lg font-semibold">App Store</div>
-                </div>
-            </a>
-            <a href="#" class="flex items-center justify-center px-8 py-4 font-medium transition-colors duration-200 rounded-lg bg-on-primary text-primary hover:bg-on-primary/90">
-                <i class="mr-3 text-2xl fab fa-google-play"></i>
-                <div class="text-left">
-                    <div class="text-xs">Get it on</div>
-                    <div class="text-lg font-semibold">Google Play</div>
+                    <div class="text-lg font-semibold">Download</div>
                 </div>
             </a>
         </div>

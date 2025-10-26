@@ -95,7 +95,7 @@ class UserController extends Controller
     /**
      * Update user status (reject verification)
      */
-    public function rejectUser(Request $request, $userId): JsonResponse
+    public function unverifyUser(Request $request, $userId): JsonResponse
     {
         // You might want to add a reason or soft delete instead
         $user = User::find($userId);
@@ -107,15 +107,35 @@ class UserController extends Controller
             ], 404);
         }
 
-        // Option 1: Keep as unverified
-        // Option 2: Soft delete or mark as rejected
         $user->status = User::STATUS_UNVERIFIED;
         $user->save();
 
         return response()->json([
             'success' => true,
-            'message' => 'User verification rejected',
+            'message' => 'User unverified',
             'data' => $user->only(['id', 'first_name', 'last_name', 'address', 'email', 'status'])
         ]);
     }
+
+
+    public function getCurrentUserStatus(Request $request): JsonResponse
+    {
+        $user = $request->user(); // This is already the User model instance
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated'
+            ], 401);
+        }
+
+        // Refresh to get latest data from database (in case admin updated status)
+        $user->refresh();
+
+        return response()->json([
+            'success' => true,
+            'user' => $user,
+        ]);
+    }
+
 }

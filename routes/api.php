@@ -53,8 +53,14 @@ Route::middleware('auth:sanctum')->group(function() {
     Route::post('/logout', LogoutController::class);
 
     Route::get('/me', function (Request $request) {
+        $user = $request->user();
+
+        if ($user) {
+            $user->refresh(); // Get fresh data from database
+        }
+
         return response()->json([
-            'user' => $request->user()
+            'user' => $user
         ]);
     });
 
@@ -63,6 +69,7 @@ Route::middleware('auth:sanctum')->group(function() {
 
 Route::prefix('staff')->group(function () {
     Route::post('/login', [StaffAuthController::class, 'login']);
+    Route::post('/login-admin', [StaffAuthController::class, 'loginAdmin']);
 
     Route::middleware('auth:staff')->group(function () {
         Route::post('/logout', [StaffAuthController::class, 'logout']);
@@ -94,7 +101,7 @@ Route::prefix('staff')->group(function () {
         Route::get('/users/verified', [UserController::class, 'getVerifiedUsers']);
         Route::get('/users', [UserController::class, 'getAllUsers']);
         Route::post('/users/{id}/verify', [UserController::class, 'verifyUser']);
-        Route::post('/users/{id}/reject', [UserController::class, 'rejectUser']);
+        Route::post('/users/{id}/unverify', [UserController::class, 'unverifyUser']);
 
         Route::get('/staff-accounts', [StaffAuthController::class, 'index']);
         Route::post('/staff-accounts/register', [StaffAuthController::class, 'register']);
