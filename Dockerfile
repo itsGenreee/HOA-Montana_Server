@@ -24,10 +24,7 @@ RUN chmod -R 775 storage bootstrap/cache
 # Create log file
 RUN touch storage/logs/laravel.log && chmod 666 storage/logs/laravel.log
 
-# Generate APP_KEY if not set
-RUN if [ -z "$APP_KEY" ]; then php artisan key:generate; fi
-
-# Cache config
+# Cache config (APP_KEY must be set in Railway environment variables)
 RUN php artisan config:cache
 
 # Start Laravel server
