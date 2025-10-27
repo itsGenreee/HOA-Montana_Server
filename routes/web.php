@@ -4,16 +4,13 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 
-Route::get('/generate-compatible-ssl-keys', function () {
+Route::get('/generate-ssl-keys-storage', function () {
     try {
-        // Create keys directory
+        // Use Laravel Storage which handles directory creation automatically
         \Illuminate\Support\Facades\Storage::makeDirectory('keys');
 
-        $keysPath = storage_path('app/keys');
-
-        // Generate key pair using PHP OpenSSL (compatible with your DigitalSignature class)
         $config = [
-            "digest_alg" => "sha256", // Same as your OPENSSL_ALGO_SHA256
+            "digest_alg" => "sha256",
             "private_key_bits" => 2048,
             "private_key_type" => OPENSSL_KEYTYPE_RSA,
         ];
@@ -24,49 +21,25 @@ Route::get('/generate-compatible-ssl-keys', function () {
             throw new \Exception('Failed to generate key pair: ' . openssl_error_string());
         }
 
-        // Export private key in PEM format
         openssl_pkey_export($keyPair, $privateKey);
-
-        // Get public key details
         $keyDetails = openssl_pkey_get_details($keyPair);
         $publicKey = $keyDetails["key"];
 
-        // Save keys to files (exactly where your DigitalSignature class expects them)
-        file_put_contents("{$keysPath}/private.pem", $privateKey);
-        file_put_contents("{$keysPath}/public.pem", $publicKey);
-
-        // Set proper permissions
-        chmod("{$keysPath}/private.pem", 0600); // Read/write for owner only
-        chmod("{$keysPath}/public.pem", 0644);  // Read for everyone
-
-        // Test that the keys work with your DigitalSignature class
-        $testData = "test_signature_data";
-        $signature = \App\Helpers\DigitalSignature::sign($testData);
-        $verification = \App\Helpers\DigitalSignature::verify($testData, $signature);
+        // Save using Laravel Storage
+        \Illuminate\Support\Facades\Storage::put('keys/private.pem', $privateKey);
+        \Illuminate\Support\Facades\Storage::put('keys/public.pem', $publicKey);
 
         return response()->json([
             'success' => true,
-            'message' => 'SSL keys generated and tested successfully!',
-            'keys_created' => [
-                'private.pem' => file_exists("{$keysPath}/private.pem"),
-                'public.pem' => file_exists("{$keysPath}/public.pem")
-            ],
-            'digital_signature_test' => [
-                'test_data' => $testData,
-                'signature' => $signature,
-                'verification' => $verification ? '✅ PASSED' : '❌ FAILED'
-            ],
-            'key_paths' => [
-                'private_key' => "{$keysPath}/private.pem",
-                'public_key' => "{$keysPath}/public.pem"
-            ]
+            'message' => 'SSL keys generated using Laravel Storage!',
+            'private_key_exists' => \Illuminate\Support\Facades\Storage::exists('keys/private.pem'),
+            'public_key_exists' => \Illuminate\Support\Facades\Storage::exists('keys/public.pem')
         ]);
 
     } catch (\Exception $e) {
         return response()->json([
             'success' => false,
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
+            'error' => $e->getMessage()
         ], 500);
     }
 });
