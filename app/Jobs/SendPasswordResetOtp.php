@@ -10,6 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class SendPasswordResetOtp implements ShouldQueue
 {
@@ -27,21 +28,29 @@ class SendPasswordResetOtp implements ShouldQueue
     public function handle(): void
     {
         try {
-            Log::info('Sending password reset OTP via job', [
+            Log::info('=== SEND PASSWORD RESET OTP JOB STARTED ===', [
                 'email' => $this->user->email,
-                'job_id' => $this->job->getJobId()
+                'otp' => $this->otp,
+                'job_id' => $this->job->getJobId(),
+                'queue' => $this->queue,
+                'connection' => config('queue.default')
             ]);
+
+            // Test direct email first
+            Log::info('Testing mail configuration...');
 
             // This will now use your CustomResetPassword notification
             $this->user->notify(new \App\Notifications\CustomResetPassword($this->otp));
 
-            Log::info('Password reset OTP sent successfully via job', [
+            Log::info('=== PASSWORD RESET OTP SENT SUCCESSFULLY ===', [
                 'email' => $this->user->email
             ]);
+
         } catch (\Exception $e) {
-            Log::error('Failed to send password reset OTP via job', [
+            Log::error('!!! FAILED TO SEND PASSWORD RESET OTP !!!', [
                 'email' => $this->user->email,
-                'error' => $e->getMessage()
+                'error_message' => $e->getMessage(),
+                'error_trace' => $e->getTraceAsString()
             ]);
 
             $this->fail($e);
@@ -50,9 +59,10 @@ class SendPasswordResetOtp implements ShouldQueue
 
     public function failed(\Exception $exception): void
     {
-        Log::error('SendPasswordResetOtp job failed', [
+        Log::error('!!! SEND PASSWORD RESET OTP JOB FAILED !!!', [
             'email' => $this->user->email,
-            'error' => $exception->getMessage()
+            'error' => $exception->getMessage(),
+            'trace' => $exception->getTraceAsString()
         ]);
     }
 }
