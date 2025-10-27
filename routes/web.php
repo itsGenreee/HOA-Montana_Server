@@ -4,6 +4,15 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 
+Route::get('/fill-tables', function () {
+    \Illuminate\Support\Facades\Artisan::call('db:seed');
+    return "
+        <h1>✅ Database Populated!</h1>
+        <p>All seeders have been executed.</p>
+        <p><strong>Remember to remove this route after use!</strong></p>
+    ";
+});
+
 Route::get('/', [PageController::class, 'home'])->name('home');
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
