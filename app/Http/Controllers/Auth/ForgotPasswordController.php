@@ -55,7 +55,7 @@ class ForgotPasswordController extends Controller
         // Send email with OTP via Queue
         try {
 
-            SendPasswordResetOtp::dispatch($user, $otp);
+            $user->notify(new \App\Notifications\CustomResetPassword($otp));
 
             return response()->json([
                 'status' => 'success',

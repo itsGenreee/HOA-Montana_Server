@@ -10,7 +10,7 @@ use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
-class CustomResetPassword extends Notification implements ShouldQueue
+class CustomResetPassword extends Notification
 {
     use Queueable;
 
