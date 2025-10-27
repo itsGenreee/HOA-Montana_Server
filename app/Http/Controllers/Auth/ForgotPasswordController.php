@@ -3,15 +3,16 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
-use Illuminate\Auth\Events\PasswordReset;
-use App\Models\User;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Models\User;
+use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use App\Jobs\SendPasswordResetOtp;
+use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Facades\Validator;
 
 class ForgotPasswordController extends Controller
 {
@@ -53,11 +54,11 @@ class ForgotPasswordController extends Controller
 
         // Send email with OTP
         try {
-            $user->sendPasswordResetNotification($otp);
+            SendPasswordResetOtp::dispatch($user, $otp);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'If an account with that email exists, we have sent a password reset code.'
+                'message' => 'We have sent a password reset code for that email.'
             ]);
         } catch (\Exception $e) {
             return response()->json([
