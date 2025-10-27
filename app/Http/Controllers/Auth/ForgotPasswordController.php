@@ -40,10 +40,10 @@ class ForgotPasswordController extends Controller
             ]);
         }
 
-        // Generate 6-digit numeric OTP (as string)
+        // Generate 6-digit numeric OTP
         $otp = (string) random_int(100000, 999999);
 
-        // Store OTP in database (hash it for security)
+        // Store OTP in database
         DB::table('password_reset_tokens')->updateOrInsert(
             ['email' => $request->email],
             [
@@ -52,15 +52,17 @@ class ForgotPasswordController extends Controller
             ]
         );
 
-        // Send email with OTP
+        // Send email with OTP via Queue
         try {
+
             SendPasswordResetOtp::dispatch($user, $otp);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'We have sent a password reset code for that email.'
+                'message' => 'If an account with that email exists, we have sent a password reset code.'
             ]);
         } catch (\Exception $e) {
+
             return response()->json([
                 'status' => 'error',
                 'message' => 'Failed to send reset email. Please try again.'
@@ -106,8 +108,8 @@ class ForgotPasswordController extends Controller
             ], 400);
         }
 
-        // Check if OTP is expired (60 minutes)
-        if (Carbon::parse($resetRecord->created_at)->diffInMinutes(Carbon::now()) > 60) {
+        // Check if OTP is expired (5 minutes)
+        if (Carbon::parse($resetRecord->created_at)->diffInMinutes(Carbon::now()) > 5) {
             DB::table('password_reset_tokens')->where('email', $request->email)->delete();
             return response()->json([
                 'status' => 'error',
