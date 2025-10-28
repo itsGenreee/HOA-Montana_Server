@@ -63,17 +63,6 @@ class StaffController extends Controller
                 ]);
             }
 
-            // 👇 SIMPLE: Check if current time is past the end time
-            $reservationEndDateTime = $reservation->date . ' ' . $reservation->getRawOriginal('end_time');
-            $reservationEnd = Carbon::parse($reservationEndDateTime);
-
-            if ($reservationEnd->isPast()) {
-                return response()->json([
-                    'is_valid' => false,
-                    'message' => 'Reservation time has ended. End time was: ' . $reservation->end_time
-                ]);
-            }
-
             return response()->json([
                 'is_valid' => true,
                 'message' => 'Reservation verified successfully',
