@@ -64,7 +64,7 @@ class StaffController extends Controller
             }
 
             // 👇 SIMPLE: Check if current time is past the end time
-            $reservationEndDateTime = $reservation->date . ' ' . $reservation->end_time;
+            $reservationEndDateTime = $reservation->date . ' ' . $reservation->getRawOriginal('end_time');
             $reservationEnd = Carbon::parse($reservationEndDateTime);
 
             if ($reservationEnd->isPast()) {
