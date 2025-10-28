@@ -65,8 +65,9 @@ class StaffController extends Controller
 
             // 👇 SIMPLE: Check if current time is past the end time
             $reservationEndDateTime = $reservation->date . ' ' . $reservation->end_time;
-            $reservationEndTime = Carbon::createFromFormat('Y-m-d H:i:s', $reservationEndDateTime . ':00', 'Asia/Manila')->timestamp;
-            $currentTime = Carbon::now('Asia/Manila')->timestamp;
+            $reservationEndTime = strtotime($reservationEndDateTime);
+
+            $currentTime = time();
 
             if ($currentTime > $reservationEndTime) {
                 return response()->json([
