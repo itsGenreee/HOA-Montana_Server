@@ -10,87 +10,88 @@ use Illuminate\Support\Facades\Auth;
 
 class StaffController extends Controller
 {
-public function verifyReservation(Request $request)
-{
-    try {
-        // 👇 ONLY validate reservation_token and digital_signature
-        $validated = $request->validate([
-            'reservation_token' => 'required|string',
-            'digital_signature' => 'required|string',
-        ]);
+    public function verifyReservation(Request $request)
+    {
+        try {
+            // 👇 ONLY validate reservation_token and digital_signature
+            $validated = $request->validate([
+                'reservation_token' => 'required|string',
+                'digital_signature' => 'required|string',
+            ]);
 
-        // 👇 Verify the digital_signature FIRST before database query
-        $isValid = DigitalSignature::verify($validated['reservation_token'], $validated['digital_signature']);
+            // 👇 Verify the digital_signature FIRST before database query
+            $isValid = DigitalSignature::verify($validated['reservation_token'], $validated['digital_signature']);
 
-        if (!$isValid) {
-            return response()->json([
-                'is_valid' => false,
-                'message' => 'Digital signature verification failed - QR code may be tampered'
-            ], 400);
-        }
-
-        // 👇 ONLY query database if signature is valid
-        $reservation = Reservation::where('reservation_token', $validated['reservation_token'])
-            ->with(['user', 'facility']) // Load relationships for display
-            ->first();
-
-        if (!$reservation) {
-            return response()->json([
-                'is_valid' => false,
-                'message' => 'Reservation not found'
-            ], 404);
-        }
-
-        // Check reservation status
-        if ($reservation->status !== 'confirmed') {
-            if ($reservation->status === 'pending') {
+            if (!$isValid) {
                 return response()->json([
                     'is_valid' => false,
-                    'message' => 'Reservation is still pending, pay to the HOA Montana Office first.'
+                    'message' => 'Digital signature verification failed - QR code may be tampered'
+                ], 400);
+            }
+
+            // 👇 ONLY query database if signature is valid
+            $reservation = Reservation::where('reservation_token', $validated['reservation_token'])
+                ->with(['user', 'facility']) // Load relationships for display
+                ->first();
+
+            if (!$reservation) {
+                return response()->json([
+                    'is_valid' => false,
+                    'message' => 'Reservation not found'
+                ], 404);
+            }
+
+            // Check reservation status
+            if ($reservation->status !== 'confirmed') {
+                if ($reservation->status === 'pending') {
+                    return response()->json([
+                        'is_valid' => false,
+                        'message' => 'Reservation is still pending, pay to the HOA Montana Office first.'
+                    ]);
+                }
+
+                if ($reservation->status === 'checked_in') {
+                    return response()->json([
+                        'is_valid' => false,
+                        'message' => 'Reservation is already checked-in'
+                    ]);
+                }
+
+                return response()->json([
+                    'is_valid' => false,
+                    'message' => 'Reservation is not confirmed. Current status: ' . $reservation->status
                 ]);
             }
 
-            if ($reservation->status === 'checked_in') {
+            // 👇 SIMPLE: Check if current time is past the end time
+            $reservationEndDateTime = $reservation->date . ' ' . $reservation->end_time;
+            $reservationEndTime = Carbon::parse($reservationEndDateTime, 'Asia/Manila')->timestamp;
+
+            $currentTime = Carbon::now('Asia/Manila')->timestamp;
+
+            if ($currentTime > $reservationEndTime) {
                 return response()->json([
                     'is_valid' => false,
-                    'message' => 'Reservation is already checked-in'
+                    'message' => 'Reservation time has ended. End time was: ' . $reservation->end_time
                 ]);
             }
 
             return response()->json([
-                'is_valid' => false,
-                'message' => 'Reservation is not confirmed. Current status: ' . $reservation->status
+                'is_valid' => true,
+                'message' => 'Reservation verified successfully',
+                'reservation' => $reservation,
+                'user' => $reservation->user,
+                'facility' => $reservation->facility
             ]);
-        }
 
-        // 👇 SIMPLE: Check if current time is past the end time
-        $reservationEndDateTime = $reservation->date . ' ' . $reservation->end_time;
-        $reservationEndTime = strtotime($reservationEndDateTime);
-        $currentTime = time();
-
-        if ($currentTime > $reservationEndTime) {
+        } catch (\Exception $e) {
             return response()->json([
                 'is_valid' => false,
-                'message' => 'Reservation time has ended. End time was: ' . $reservation->end_time
-            ]);
+                'message' => 'Verification failed',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'is_valid' => true,
-            'message' => 'Reservation verified successfully',
-            'reservation' => $reservation,
-            'user' => $reservation->user,
-            'facility' => $reservation->facility
-        ]);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'is_valid' => false,
-            'message' => 'Verification failed',
-            'error' => $e->getMessage()
-        ], 500);
     }
-}
 
     // checkIn method remains the same (already simplified)
     public function checkIn(Request $request)
