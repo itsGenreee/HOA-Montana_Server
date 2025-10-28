@@ -153,8 +153,8 @@ class ForgotPasswordController extends Controller
             ], 400);
         }
 
-        // Check if OTP is expired (60 minutes)
-        if (Carbon::parse($resetRecord->created_at)->diffInMinutes(Carbon::now()) > 60) {
+        // Check if OTP is expired (5 minutes)
+        if (Carbon::parse($resetRecord->created_at)->diffInMinutes(Carbon::now()) > 5) {
             DB::table('password_reset_tokens')->where('email', $request->email)->delete();
             return response()->json([
                 'status' => 'error',

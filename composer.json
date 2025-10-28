@@ -7,12 +7,13 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "ext-gd": "*",
         "beeyev/disposable-email-filter-php": "^1.3",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
         "luigel/laravel-paymongo": "2.x-dev",
-        "ext-gd": "*",
+        "resend/resend-laravel": "^0.23.0",
         "simplesoftwareio/simple-qrcode": "^4.2"
     },
     "require-dev": {

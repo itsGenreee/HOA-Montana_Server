@@ -28,37 +28,49 @@ class CustomResetPassword extends Notification implements ShouldQueue
 
     public function toMail($notifiable)
     {
-        Log::info('🔧 Building CustomResetPassword email', [
-            'email' => $notifiable->email,
-            'token' => $this->token
-        ]);
-
-        try {
-            $mail = (new MailMessage)
-                ->subject('Password Reset Request - HOA Montaña')
-                ->markdown('emails.auth.password-reset', [
-                    'token' => $this->token,
-                    'user' => $notifiable
-                ])
-                ->line('Please use the reset code above in the HOA Montaña mobile app to reset your password.')
-                ->line('This reset code will expire in 60 minutes.')
-                ->line('If you did not request a password reset, please ignore this email.');
-
-            Log::info('✅ Email message built successfully', [
-                'email' => $notifiable->email
+        return (new MailMessage)
+            ->subject('Password Reset Request - HOA Montaña')
+            ->view('emails.auth.password-reset', [
+                'token' => $this->token,
+                'user' => $notifiable
             ]);
-
-            return $mail;
-
-        } catch (\Exception $e) {
-            Log::error('❌ Error building email message', [
-                'email' => $notifiable->email,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            throw $e;
-        }
     }
+
+private function buildHtmlEmail($token)
+{
+    return "
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            .otp-code {
+                background: #ffdbcd;
+                color: #360f00;
+                padding: 20px;
+                border-radius: 4px;
+                text-align: center;
+                font-size: 24px;
+                font-weight: bold;
+                margin: 20px 0;
+            }
+        </style>
+    </head>
+    <body>
+        <h1 style='color: #201a18; font-size: 24px; font-weight: bold;'>Password Reset Request</h1>
+        <p>You are receiving this email because we received a password reset request for your account.</p>
+
+        <h2>Your Reset Code</h2>
+        <div class='otp-code'>{$token}</div>
+
+        <p>This reset code will expire in 60 minutes.</p>
+        <p>Please use this code in the HOA Montaña mobile app to reset your password.</p>
+        <p>If you did not request a password reset, no further action is required.</p>
+
+        <p>Thanks,<br>HOA Montaña Team</p>
+    </body>
+    </html>
+    ";
+}
 
     public function failed(\Exception $e)
     {
