@@ -2,8 +2,6 @@
 
 namespace App\Helpers;
 
-use Illuminate\Support\Facades\Storage;
-
 class DigitalSignature
 {
     /**
@@ -11,19 +9,15 @@ class DigitalSignature
      */
     public static function sign(string $data): string
     {
-        // Use Laravel Storage instead of direct file path
-        if (!Storage::exists('keys/private.pem')) {
-            throw new \Exception('Private key not found in storage.');
-        }
-
-        $privateKeyContent = Storage::get('keys/private.pem');
+        $privateKeyContent = self::getPrivateKey();
         $privkey = openssl_pkey_get_private($privateKeyContent);
 
         if ($privkey === false) {
-            throw new \Exception('Invalid private key.');
+            throw new \Exception('Invalid private key: ' . openssl_error_string());
         }
 
         openssl_sign($data, $signature, $privkey, OPENSSL_ALGO_SHA256);
+
         return base64_encode($signature);
     }
 
@@ -32,18 +26,54 @@ class DigitalSignature
      */
     public static function verify(string $data, string $signature): bool
     {
-        if (!Storage::exists('keys/public.pem')) {
-            throw new \Exception('Public key not found in storage.');
-        }
-
-        $publicKeyContent = Storage::get('keys/public.pem');
+        $publicKeyContent = self::getPublicKey();
         $pubkey = openssl_pkey_get_public($publicKeyContent);
 
         if ($pubkey === false) {
-            throw new \Exception('Invalid public key.');
+            throw new \Exception('Invalid public key: ' . openssl_error_string());
         }
 
         $result = openssl_verify($data, base64_decode($signature), $pubkey, OPENSSL_ALGO_SHA256);
-        return $result === 1;
+
+        $result = openssl_verify($data, $signature, $pubkey, OPENSSL_ALGO_SHA256);
+
+        switch ($result) {
+            case 1:
+                return true;  // Signature is valid
+            case 0:
+                return false; // Signature is invalid
+            case -1:
+                throw new \Exception('OpenSSL error: ' . openssl_error_string());
+            default:
+                throw new \Exception('Unexpected return value from openssl_verify');
+        }
+    }
+
+    /**
+     * Get private key from environment variable (base64 decoded)
+     */
+    private static function getPrivateKey(): string
+    {
+        $privateKeyBase64 = env('SSL_PRIVATE_KEY');
+
+        if (!$privateKeyBase64) {
+            throw new \Exception('SSL_PRIVATE_KEY environment variable not set.');
+        }
+
+        return base64_decode($privateKeyBase64);
+    }
+
+    /**
+     * Get public key from environment variable (base64 decoded)
+     */
+    private static function getPublicKey(): string
+    {
+        $publicKeyBase64 = env('SSL_PUBLIC_KEY');
+
+        if (!$publicKeyBase64) {
+            throw new \Exception('SSL_PUBLIC_KEY environment variable not set.');
+        }
+
+        return base64_decode($publicKeyBase64);
     }
 }

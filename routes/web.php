@@ -4,11 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 
-Route::get('/generate-ssl-keys-storage', function () {
+Route::get('/generate-ssl-keys', function () {
     try {
-        // Use Laravel Storage which handles directory creation automatically
-        \Illuminate\Support\Facades\Storage::makeDirectory('keys');
-
         $config = [
             "digest_alg" => "sha256",
             "private_key_bits" => 2048,
@@ -25,15 +22,12 @@ Route::get('/generate-ssl-keys-storage', function () {
         $keyDetails = openssl_pkey_get_details($keyPair);
         $publicKey = $keyDetails["key"];
 
-        // Save using Laravel Storage
-        \Illuminate\Support\Facades\Storage::put('keys/private.pem', $privateKey);
-        \Illuminate\Support\Facades\Storage::put('keys/public.pem', $publicKey);
-
         return response()->json([
             'success' => true,
-            'message' => 'SSL keys generated using Laravel Storage!',
-            'private_key_exists' => \Illuminate\Support\Facades\Storage::exists('keys/private.pem'),
-            'public_key_exists' => \Illuminate\Support\Facades\Storage::exists('keys/public.pem')
+            'message' => 'Copy these BASE64 encoded keys to your .env file:',
+            'public_key_base64' => base64_encode($publicKey),
+            'private_key_base64' => base64_encode($privateKey),
+            'instructions' => 'Add these as single-line environment variables'
         ]);
 
     } catch (\Exception $e) {
