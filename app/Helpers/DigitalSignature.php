@@ -17,6 +17,7 @@ class DigitalSignature
         }
 
         openssl_sign($data, $signature, $privkey, OPENSSL_ALGO_SHA256);
+        openssl_free_key($privkey);
 
         return base64_encode($signature);
     }
@@ -34,8 +35,7 @@ class DigitalSignature
         }
 
         $result = openssl_verify($data, base64_decode($signature), $pubkey, OPENSSL_ALGO_SHA256);
-
-        $result = openssl_verify($data, $signature, $pubkey, OPENSSL_ALGO_SHA256);
+        openssl_free_key($pubkey);
 
         switch ($result) {
             case 1:
