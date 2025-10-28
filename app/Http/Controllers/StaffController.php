@@ -65,7 +65,7 @@ class StaffController extends Controller
 
             // 👇 SIMPLE: Check if current time is past the end time
             $reservationEndDateTime = $reservation->date . ' ' . $reservation->end_time;
-            $reservationEndTime = Carbon::parse($reservationEndDateTime, 'Asia/Manila')->timestamp;
+            $reservationEndTime = Carbon::parse($reservationEndDateTime);
 
             $currentTime = Carbon::now('Asia/Manila')->timestamp;
 
