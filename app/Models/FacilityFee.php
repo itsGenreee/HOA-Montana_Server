@@ -13,7 +13,7 @@ class FacilityFee extends Model
 
     protected $fillable = [
         'facility_id',
-        'type',        // 'base', 'shift', 'block'
+        'type',        // 'base', 'shift', 'block' but the Event Place is base
         'name',        // optional: day/night, block name
         'fee',
         'discounted_fee',

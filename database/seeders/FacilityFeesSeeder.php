@@ -46,7 +46,7 @@ class FacilityFeesSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        // Event Place: blocks
+        // Event Place: blocks but base was used as a default value
         DB::table('facility_fees')->insert([
             'facility_id' => 3,
             'name' => 'Morning Event',

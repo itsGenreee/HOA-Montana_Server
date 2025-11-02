@@ -13,13 +13,11 @@ class StaffController extends Controller
     public function verifyReservation(Request $request)
     {
         try {
-            // 👇 ONLY validate reservation_token and digital_signature
             $validated = $request->validate([
                 'reservation_token' => 'required|string',
                 'digital_signature' => 'required|string',
             ]);
 
-            // 👇 Verify the digital_signature FIRST before database query
             $isValid = DigitalSignature::verify($validated['reservation_token'], $validated['digital_signature']);
 
             if (!$isValid) {
@@ -29,9 +27,8 @@ class StaffController extends Controller
                 ], 400);
             }
 
-            // 👇 ONLY query database if signature is valid
             $reservation = Reservation::where('reservation_token', $validated['reservation_token'])
-                ->with(['user', 'facility']) // Load relationships for display
+                ->with(['user', 'facility'])
                 ->first();
 
             if (!$reservation) {
@@ -41,7 +38,6 @@ class StaffController extends Controller
                 ], 404);
             }
 
-            // Check reservation status
             if ($reservation->status !== 'confirmed') {
                 if ($reservation->status === 'pending') {
                     return response()->json([

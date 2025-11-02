@@ -143,81 +143,81 @@ class FacilityController extends Controller
     }
 
     //For Event Place
-public function availability3($id, $date, Request $request)
-{
-    try {
-        if (!$date) {
-            return response()->json(['error' => 'Date is required'], 400);
-        }
-
-        // Get the facility and its block fees
-        $facility = Facility::with('fees')->findOrFail($id);
-
-        // Get confirmed reservations for this date with amenities
-        $reservations = $facility->reservations()
-            ->whereDate('date', $date)
-            ->where('status', 'confirmed')
-            ->with(['user', 'amenities']) // Remove .amenity since amenities already loads the Amenity model
-            ->get();
-
-        $slots = [];
-
-        // Each fee entry is considered a block
-        foreach ($facility->fees as $feeEntry) {
-            $feeStart = Carbon::parse($feeEntry->start_time);
-            $feeEnd   = Carbon::parse($feeEntry->end_time);
-
-            // Check if this block is reserved - USE RAW TIMES
-            $reservation = $reservations->first(function ($res) use ($feeStart, $feeEnd) {
-                // Use getRawOriginal to get the raw database values
-                $resStart = Carbon::parse($res->getRawOriginal('start_time'));
-                $resEnd   = Carbon::parse($res->getRawOriginal('end_time'));
-                return $resStart < $feeEnd && $resEnd > $feeStart;
-            });
-
-            // Prepare amenities data if reservation exists
-            $amenities = [];
-            if ($reservation && $reservation->amenities->isNotEmpty()) {
-                foreach ($reservation->amenities as $amenity) {
-                    // Access pivot data for quantity and price
-                    $amenities[] = [
-                        'id' => $amenity->id,
-                        'name' => $amenity->name,
-                        'quantity' => $amenity->pivot->quantity,
-                        'price' => $amenity->pivot->price,
-                        'total' => $amenity->pivot->quantity * $amenity->pivot->price,
-                    ];
-                }
+    public function availability3($id, $date, Request $request)
+    {
+        try {
+            if (!$date) {
+                return response()->json(['error' => 'Date is required'], 400);
             }
 
-            $slots[] = [
-                'start_time' => $feeStart->format('g:i A'),
-                'end_time'   => $feeEnd->format('g:i A'),
-                'fee'        => $reservation ? $reservation->total_fee : $feeEntry->fee,
-                'discounted_fee' => $reservation ? $reservation->facility_fee : $feeEntry->discounted_fee,
-                'available'  => !$reservation,
-                'user'       => $reservation ? $reservation->user : null,
-                'customer_name' => $reservation ? $reservation->customer_name : null,
-                'id' => $reservation ? $reservation->id : null,
-                'amenities' => $amenities, // Include reserved amenities
-                'amenities_fee' => $reservation ? $reservation->amenities_fee : 0, // Include amenities fee
-                'facility_fee' => $reservation ? $reservation->facility_fee : $feeEntry->fee, // Include facility fee
-                'total_fee_breakdown' => [ // Detailed breakdown
-                    'facility_fee' => $reservation ? $reservation->facility_fee : $feeEntry->fee,
-                    'amenities_fee' => $reservation ? $reservation->amenities_fee : 0,
-                    'total_fee' => $reservation ? $reservation->total_fee : $feeEntry->fee,
-                ]
-            ];
+            // Get the facility and its block fees
+            $facility = Facility::with('fees')->findOrFail($id);
+
+            // Get confirmed reservations for this date with amenities
+            $reservations = $facility->reservations()
+                ->whereDate('date', $date)
+                ->where('status', 'confirmed')
+                ->with(['user', 'amenities']) // Remove .amenity since amenities already loads the Amenity model
+                ->get();
+
+            $slots = [];
+
+            // Each fee entry is considered a block
+            foreach ($facility->fees as $feeEntry) {
+                $feeStart = Carbon::parse($feeEntry->start_time);
+                $feeEnd   = Carbon::parse($feeEntry->end_time);
+
+                // Check if this block is reserved - USE RAW TIMES
+                $reservation = $reservations->first(function ($res) use ($feeStart, $feeEnd) {
+                    // Use getRawOriginal to get the raw database values
+                    $resStart = Carbon::parse($res->getRawOriginal('start_time'));
+                    $resEnd   = Carbon::parse($res->getRawOriginal('end_time'));
+                    return $resStart < $feeEnd && $resEnd > $feeStart;
+                });
+
+                // Prepare amenities data if reservation exists
+                $amenities = [];
+                if ($reservation && $reservation->amenities->isNotEmpty()) {
+                    foreach ($reservation->amenities as $amenity) {
+                        // Access pivot data for quantity and price
+                        $amenities[] = [
+                            'id' => $amenity->id,
+                            'name' => $amenity->name,
+                            'quantity' => $amenity->pivot->quantity,
+                            'price' => $amenity->pivot->price,
+                            'total' => $amenity->pivot->quantity * $amenity->pivot->price,
+                        ];
+                    }
+                }
+
+                $slots[] = [
+                    'start_time' => $feeStart->format('g:i A'),
+                    'end_time'   => $feeEnd->format('g:i A'),
+                    'fee'        => $reservation ? $reservation->total_fee : $feeEntry->fee,
+                    'discounted_fee' => $reservation ? $reservation->facility_fee : $feeEntry->discounted_fee,
+                    'available'  => !$reservation,
+                    'user'       => $reservation ? $reservation->user : null,
+                    'customer_name' => $reservation ? $reservation->customer_name : null,
+                    'id' => $reservation ? $reservation->id : null,
+                    'amenities' => $amenities, // Include reserved amenities
+                    'amenities_fee' => $reservation ? $reservation->amenities_fee : 0, // Include amenities fee
+                    'facility_fee' => $reservation ? $reservation->facility_fee : $feeEntry->fee, // Include facility fee
+                    'total_fee_breakdown' => [ // Detailed breakdown
+                        'facility_fee' => $reservation ? $reservation->facility_fee : $feeEntry->fee,
+                        'amenities_fee' => $reservation ? $reservation->amenities_fee : 0,
+                        'total_fee' => $reservation ? $reservation->total_fee : $feeEntry->fee,
+                    ]
+                ];
+            }
+
+            return response()->json($slots);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Server error: ' . $e->getMessage()
+            ], 500);
         }
-
-        return response()->json($slots);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => 'Server error: ' . $e->getMessage()
-        ], 500);
     }
-}
 
     //Change Fee for Tennis Court
     public function changeFee1($id, Request $request) {
