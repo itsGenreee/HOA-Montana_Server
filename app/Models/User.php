@@ -67,6 +67,11 @@ class User extends Authenticatable
         $this->notify(new CustomResetPassword($token));
     }
 
+        public function getNameAttribute()
+    {
+        return trim("{$this->first_name} {$this->last_name}");
+    }
+
     /**
      * Get the attributes that should be cast.
      *
