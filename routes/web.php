@@ -40,29 +40,30 @@ use App\Http\Controllers\ProfileController;
 //     }
 // });
 
-    Route::get('/create-admin', function () {
-        try {
-            // Prevent duplicate insert
-            $existing = DB::table('staffs')->where('email', 'jane.doe@gmail.com')->first();
-            if ($existing) {
-                return 'Admin Jane Doe already exists.';
-            }
+    // Route for creating an admin (should be used only for debugging staff/admin)
+    // Route::get('/create-admin', function () {
+    //     try {
+    //         // Prevent duplicate insert
+    //         $existing = DB::table('staffs')->where('email', 'jane.doe@gmail.com')->first();
+    //         if ($existing) {
+    //             return 'Admin Jane Doe already exists.';
+    //         }
 
-            DB::table('staffs')->insert([
-                'first_name' => 'Jane',
-                'last_name' => 'Doe',
-                'email' => 'jane.doe@gmail.com',
-                'password' => Hash::make('password123'),
-                'role' => 'admin',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+    //         DB::table('staffs')->insert([
+    //             'first_name' => 'Jane',
+    //             'last_name' => 'Doe',
+    //             'email' => 'jane.doe@gmail.com',
+    //             'password' => Hash::make('password123'),
+    //             'role' => 'admin',
+    //             'created_at' => now(),
+    //             'updated_at' => now(),
+    //         ]);
 
-            return '✅ Admin Jane Doe created successfully!';
-        } catch (\Throwable $e) {
-            return '❌ Error creating admin: ' . $e->getMessage();
-        }
-    });
+    //         return '✅ Admin Jane Doe created successfully!';
+    //     } catch (\Throwable $e) {
+    //         return '❌ Error creating admin: ' . $e->getMessage();
+    //     }
+    // });
 
 
 Route::get('/', [PageController::class, 'home'])->name('home');
