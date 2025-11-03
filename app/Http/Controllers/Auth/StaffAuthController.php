@@ -146,88 +146,81 @@ class StaffAuthController extends Controller
         ], 201);
     }
 
-    public function update(Request $request, $id): JsonResponse
-    {
-        $staff = Staff::find($id);
+public function update(Request $request, $id): JsonResponse
+{
+    $staff = Staff::find($id);
 
-        if (!$staff) {
-            return response()->json([
-                'message' => 'Staff account not found'
-            ], 404);
-        }
-
-        $currentStaff = auth('staff')->user();
-
-        // Staff can only update their own account, admins can update any account
-        if ($currentStaff->role !== 'admin' && $currentStaff->id !== $staff->id) {
-            return response()->json([
-                'message' => 'You can only update your own account'
-            ], 403);
-        }
-
-        // Admin cannot change their role to staff
-    if ($request->has('role') && $currentStaff->id === $staff->id && $request->role === 'staff' && $currentStaff->role === 'admin') {
+    if (!$staff) {
         return response()->json([
-            'message' => 'You cannot change your own role from admin to staff'
+            'message' => 'Staff account not found'
+        ], 404);
+    }
+
+    $currentStaff = auth('staff')->user();
+
+    // Staff can only update their own account, admins can update any account
+    if ($currentStaff->role !== 'admin' && $currentStaff->id !== $staff->id) {
+        return response()->json([
+            'message' => 'You can only update your own account'
         ], 403);
     }
 
-        // Staff cannot change their role, only admins can
-        if ($request->has('role') && $currentStaff->role !== 'admin') {
-            return response()->json([
-                'message' => 'Only administrators can change roles'
-            ], 403);
-        }
-
-        // Create validation rules based on what's actually in the request
-        $rules = [
-            'first_name' => ['sometimes', 'string', 'max:255'],
-            'last_name' => ['sometimes', 'string', 'max:255'],
-            'email' => ['sometimes', 'string', 'email', 'max:255', 'unique:staffs,email,' . $id],
-            'role' => ['sometimes', 'string', 'in:admin,staff'],
-        ];
-
-        // Only add password validation if password is being changed
-        if ($request->has('password')) {
-            $rules['password'] = ['required', 'string', 'min:6', 'confirmed'];
-        }
-
-        $validator = Validator::make($request->all(), $rules);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $updateData = [];
-        if ($request->has('first_name')) {
-            $updateData['first_name'] = $request->first_name;
-        }
-        if ($request->has('last_name')) {
-            $updateData['last_name'] = $request->last_name;
-        }
-        if ($request->has('email')) {
-            $updateData['email'] = $request->email;
-        }
-        if ($request->has('password')) {
-            $updateData['password'] = Hash::make($request->password);
-        }
-        if ($request->has('role')) {
-            $updateData['role'] = $request->role;
-        }
-
-        // Only update if there's actually data to update
-        if (!empty($updateData)) {
-            $staff->update($updateData);
-        }
-
+    // Staff cannot change their role, only admins can
+    if ($request->has('role') && $currentStaff->role !== 'admin') {
         return response()->json([
-            'message' => 'Staff account updated successfully',
-            'staff' => $staff->only(['id', 'first_name', 'last_name', 'email', 'role', 'updated_at'])
-        ]);
+            'message' => 'Only administrators can change roles'
+        ], 403);
     }
+
+    // Create validation rules based on what's actually in the request
+    $rules = [
+        'first_name' => ['sometimes', 'string', 'max:255'],
+        'last_name' => ['sometimes', 'string', 'max:255'],
+        'email' => ['sometimes', 'string', 'email', 'max:255', 'unique:staffs,email,' . $id],
+        'role' => ['sometimes', 'string', 'in:admin,staff'],
+    ];
+
+    // Only add password validation if password is being changed
+    if ($request->has('password')) {
+        $rules['password'] = ['required', 'string', 'min:6', 'confirmed'];
+    }
+
+    $validator = Validator::make($request->all(), $rules);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'message' => 'Validation failed',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    $updateData = [];
+    if ($request->has('first_name')) {
+        $updateData['first_name'] = $request->first_name;
+    }
+    if ($request->has('last_name')) {
+        $updateData['last_name'] = $request->last_name;
+    }
+    if ($request->has('email')) {
+        $updateData['email'] = $request->email;
+    }
+    if ($request->has('password')) {
+        $updateData['password'] = Hash::make($request->password);
+    }
+    if ($request->has('role')) {
+        $updateData['role'] = $request->role;
+    }
+
+    // Only update if there's actually data to update
+    if (!empty($updateData)) {
+        $staff->update($updateData);
+    }
+
+    return response()->json([
+        'message' => 'Staff account updated successfully',
+        'staff' => $staff->only(['id', 'first_name', 'last_name', 'email', 'role', 'updated_at'])
+    ]);
+}
 
     /**
      * Delete a staff account

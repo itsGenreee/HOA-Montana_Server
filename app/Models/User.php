@@ -53,6 +53,7 @@ class User extends Authenticatable
     {
         return $this->status === self::STATUS_PENDING_REVIEW;
     }
+    
 
     /**
      * Check if user is unverified
