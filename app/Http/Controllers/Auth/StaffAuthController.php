@@ -165,6 +165,13 @@ public function update(Request $request, $id): JsonResponse
         ], 403);
     }
 
+    // Admin cannot change their own role into staff
+    if ($request->has('role') && $currentStaff->id === $staff->id && $request->role === 'staff' && $currentStaff->role === 'admin') {
+        return response()->json([
+            'message' => 'You cannot change your own role from admin to staff'
+        ], 403);
+    }
+
     // Staff cannot change their role, only admins can
     if ($request->has('role') && $currentStaff->role !== 'admin') {
         return response()->json([
