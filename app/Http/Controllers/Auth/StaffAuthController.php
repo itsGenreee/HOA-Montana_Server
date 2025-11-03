@@ -165,12 +165,12 @@ class StaffAuthController extends Controller
             ], 403);
         }
 
-        // Admin cannot change their own role to staff
-        if ($request->has('role') && $currentStaff->id === $staff->id && $request->role === 'staff' && $currentStaff->role === 'admin') {
-            return response()->json([
-                'message' => 'You cannot change your own role from admin to staff'
-            ], 403);
-        }
+        // Admin cannot change their role to staff
+    if ($request->has('role') && $currentStaff->id === $staff->id && $request->role === 'staff' && $currentStaff->role === 'admin') {
+        return response()->json([
+            'message' => 'You cannot change your own role from admin to staff'
+        ], 403);
+    }
 
         // Staff cannot change their role, only admins can
         if ($request->has('role') && $currentStaff->role !== 'admin') {
