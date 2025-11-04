@@ -25,7 +25,7 @@
                         <i class="text-2xl fas fa-map-marker-alt text-primary"></i>
                     </div>
                     <h3 class="mb-2 text-xl font-semibold text-on-surface">Our Office</h3>
-                    <p class="text-on-surface-variant">Metro Montana Village<br>Brgy. Burgos, Rod., Rizal</p>
+                    <p class="text-on-surface-variant">Metro Montaña Village 1<br>Block 9 Arayat Street, <br>Brgy. Burgos, Rodriguez Rizal, 1860</p>
                 </div>
 
                 <div class="p-6 text-center border shadow-lg bg-surface rounded-xl border-surface-variant">
@@ -33,7 +33,7 @@
                         <i class="text-2xl fas fa-phone text-secondary"></i>
                     </div>
                     <h3 class="mb-2 text-xl font-semibold text-on-surface">Phone</h3>
-                    <p class="text-on-surface-variant">+1 (555) 123-4567<br>Mon-Fri 8am-6pm</p>
+                    <p class="text-on-surface-variant">09954902432<br>Mon-Fri 8am-6pm</p>
                 </div>
 
                 <div class="p-6 text-center border shadow-lg bg-surface rounded-xl border-surface-variant">
@@ -41,7 +41,7 @@
                         <i class="text-2xl fas fa-envelope text-tertiary"></i>
                     </div>
                     <h3 class="mb-2 text-xl font-semibold text-on-surface">Email</h3>
-                    <p class="text-on-surface-variant">support@hoamontana.com<br>Reply within 24 hours</p>
+                    <p class="text-on-surface-variant">hoamontana.supp@gmail.com<br>Reply within 24 hours</p>
                 </div>
             </div>
         </div>
@@ -52,7 +52,7 @@
             <div class="max-w-3xl mx-auto space-y-4">
                 <div class="p-6 text-left rounded-lg bg-surface-variant">
                     <h3 class="mb-3 text-lg font-semibold text-on-surface-variant">How do I make a reservation?</h3>
-                    <p class="text-on-surface-variant">Simply download our mobile app, create your account, and navigate to the Reservation tab. Select your preferred facility, choose your date and time slot, then visit the HOA office to confirm and complete your payment.</p>
+                    <p class="text-on-surface-variant">Simply download our mobile app, create your account, and navigate to the Reservation tab. Select your preferred facility, choose your date and time slot, then visit the HOA office to confirm your reservation and complete your payment.</p>
                 </div>
 
                 <div class="p-6 text-left rounded-lg bg-surface-variant">
