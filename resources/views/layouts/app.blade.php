@@ -47,7 +47,7 @@
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
                     <a href="{{ route('home') }}" class="flex items-center flex-shrink-0">
-                        <i class="mr-2 text-2xl fas fa-mobile-alt text-primary"></i>
+                        <img src="{{ asset('images/mm-icon-round.png') }}" alt="HOA Metro Montaña logo" class="w-8 h-8 mr-2">
                         <span class="text-2xl font-black text-on-surface" >HOA Montaña</span>
                     </a>
                 </div>

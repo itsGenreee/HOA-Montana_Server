@@ -46,6 +46,13 @@ class StaffController extends Controller
                     ]);
                 }
 
+                if ($reservation->status === 'canceled') {
+                    return response()->json([
+                        'is_valid' => false,
+                        'message' => 'This reservation is canceled'
+                    ]);
+                }
+
                 if ($reservation->status === 'checked_in') {
                     return response()->json([
                         'is_valid' => false,
